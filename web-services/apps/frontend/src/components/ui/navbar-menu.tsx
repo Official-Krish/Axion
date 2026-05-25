@@ -2,8 +2,6 @@
 import React from "react";
 import { motion } from "motion/react";
 
-
-
 const transition = {
   type: "spring" as const,
   mass: 0.5,
@@ -26,10 +24,7 @@ export const MenuItem = ({
 }) => {
   return (
     <div onMouseEnter={() => setActive(item)} className="relative ">
-      <motion.p
-        transition={{ duration: 0.3 }}
-        className="cursor-pointer"
-      >
+      <motion.p transition={{ duration: 0.3 }} className="cursor-pointer">
         {item}
       </motion.p>
       {active !== null && (
@@ -109,7 +104,10 @@ export const ProductItem = ({
   );
 };
 
-export const HoveredLink = ({ children, ...rest }: any) => {
+export const HoveredLink = ({
+  children,
+  ...rest
+}: React.ComponentPropsWithoutRef<"a">) => {
   return (
     <a
       {...rest}

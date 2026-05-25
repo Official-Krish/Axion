@@ -7,8 +7,8 @@
     "backend": "bun run ./apps/backend/index.ts",
     "backend:dev": "cd ./apps/backend && bun run --hot index.ts",
     "backend:prod": "bun run ./apps/backend/dist/index.js",
-    "build": "bun build ./apps/backend/index.ts --outdir ./apps/backend/dist --target bun --minify",
-    "build:backend": "cd ./apps/backend && bun build index.ts --outdir dist --target bun --minify"
+    "build": "bun build ./index.ts --outdir ./dist --target bun --minify",
+    "lint": "bun run build"
   },
   "devDependencies": {
     "@types/bun": "latest",

@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
@@ -32,16 +31,32 @@ export const RentVM = () => {
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [vms, setVms] = useState<VMTypes[]>([]);
   const [finalConfig, setFinalConfig] = useState<FinalConfig>();
-  const [paymentStatus, setPaymentStatus] = useState<"Pending" | "Success" | "Failed" | "not_started">("not_started");
-  const [paymentType, setPaymentType] = useState<"duration" | "escrow">("duration");
+  const [paymentStatus, setPaymentStatus] = useState<
+    "Pending" | "Success" | "Failed" | "not_started"
+  >("not_started");
+  const [paymentType, setPaymentType] = useState<"duration" | "escrow">(
+    "duration",
+  );
   const [escrowAmount, setEscrowAmount] = useState(0);
 
   const wallet = useAnchorWallet();
 
   const steps = [
-    { number: 1, title: "Instance Configuration", description: "Choose your VM configuration and basic settings" },
-    { number: 2, title: "Payment Method", description: "Select payment type and configure billing" },
-    { number: 3, title: "Review & Deploy", description: "Review configuration and deploy your VM" }
+    {
+      number: 1,
+      title: "Instance Configuration",
+      description: "Choose your VM configuration and basic settings",
+    },
+    {
+      number: 2,
+      title: "Payment Method",
+      description: "Select payment type and configure billing",
+    },
+    {
+      number: 3,
+      title: "Review & Deploy",
+      description: "Review configuration and deploy your VM",
+    },
   ];
   const [isNameAvailable, setIsNameAvailable] = useState<boolean>(false);
 
@@ -57,97 +72,112 @@ export const RentVM = () => {
       } catch (error) {
         console.error("Error fetching VM configurations:", error);
       }
-    }
+    };
     fetchVMConfigs();
-  }, [])
+  }, []);
 
   useEffect(() => {
     const checkNameAvailability = async () => {
       if (!vmName) {
         return;
       }
-      try { 
-        const res = await axios.get(`${BACKEND_URL}/vm/checkNameAvailability?name=${vmName}`, {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
+      try {
+        const res = await axios.get(
+          `${BACKEND_URL}/vm/checkNameAvailability?name=${vmName}`,
+          {
+            headers: {
+              Authorization: `${localStorage.getItem("token")}`,
+            },
           },
-        });
+        );
 
-        setIsNameAvailable(res.data.available)
-
+        setIsNameAvailable(res.data.available);
       } catch (error) {
         console.error("Error", error);
       }
-    }
+    };
     checkNameAvailability();
   }, [vmName]);
 
-  const selectedVMConfig = vms.find(config => config.id === selectedConfig);
+  const selectedVMConfig = vms.find((config) => config.id === selectedConfig);
   const [costPerMin, setCostPerMin] = useState(0);
 
   useEffect(() => {
     const fetchCostPerMin = async () => {
       if (selectedVMConfig) {
-        const price = await calculatePrice(selectedVMConfig.machineType, diskSize, 1);
+        const price = await calculatePrice(
+          selectedVMConfig.machineType,
+          diskSize,
+          1,
+        );
         setCostPerMin(Number(price));
       }
     };
     fetchCostPerMin();
   }, [selectedVMConfig, diskSize]);
 
-  const canProceedToStep2 = (vmName && selectedConfig && region && os);
-  const canProceedToStep3 = !!(selectedVMConfig && (paymentType === "duration" ? duration > 0 : escrowAmount > 0));
+  const canProceedToStep2 = vmName && selectedConfig && region && os;
+  const canProceedToStep3 = !!(
+    selectedVMConfig &&
+    (paymentType === "duration" ? duration > 0 : escrowAmount > 0)
+  );
 
   const handlePayment = async () => {
     setIsConfirmOpen(false);
     setPaymentStatus("Pending");
     const id = crypto.randomUUID().substring(0, 32);
-    const tx = paymentType === "duration" ?  await TransferToVaultAndStartRental(costPerMin * duration, duration, id ,wallet!) : await StartRentalSessionWithEscrow(wallet!, escrowAmount, id);
+    const tx =
+      paymentType === "duration"
+        ? await TransferToVaultAndStartRental(
+            costPerMin * duration,
+            duration,
+            id,
+            wallet!,
+          )
+        : await StartRentalSessionWithEscrow(wallet!, escrowAmount, id);
 
     if (!tx?.success) {
       toast.error("Transaction failed. Please try again.", {
         position: "bottom-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
       });
       setPaymentStatus("Failed");
       return;
     }
 
     try {
-      const endTime = paymentType === "duration" ? duration : await calculateEscrowEndTime(escrowAmount, selectedVMConfig?.machineType!, diskSize);
-      const res = await axios.post(`${BACKEND_URL}/vmInstance/create`, {
-        id,
-        name: vmName.toLowerCase(),
-        paymentType: paymentType.toUpperCase(),
-        price: paymentType === "duration" ? costPerMin * duration : escrowAmount,
-        region,
-        os,
-        diskSize: diskSize.toString(),
-        endTime: endTime,
-        machineType: selectedVMConfig?.machineType,
-        provider: "GCP", // Assuming GCP for now, can be dynamic based on selectedConfig
-      }, {
-        headers: {
-          Authorization: `${localStorage.getItem("token")}`,
+      const endTime =
+        paymentType === "duration"
+          ? duration
+          : await calculateEscrowEndTime(
+              escrowAmount,
+              selectedVMConfig!.machineType,
+              diskSize,
+            );
+      const res = await axios.post(
+        `${BACKEND_URL}/vmInstance/create`,
+        {
+          id,
+          name: vmName.toLowerCase(),
+          paymentType: paymentType.toUpperCase(),
+          price:
+            paymentType === "duration" ? costPerMin * duration : escrowAmount,
+          region,
+          os,
+          diskSize: diskSize.toString(),
+          endTime: endTime,
+          machineType: selectedVMConfig?.machineType,
+          provider: "GCP", // Assuming GCP for now, can be dynamic based on selectedConfig
         },
-      });
+        {
+          headers: {
+            Authorization: `${localStorage.getItem("token")}`,
+          },
+        },
+      );
       if (res.status === 200) {
         setPaymentStatus("Success");
         toast.success("VM instance created successfully!", {
           position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "dark",
         });
         setFinalConfig({
           vmId: res.data.vmId,
@@ -160,13 +190,6 @@ export const RentVM = () => {
       } else {
         toast.error(`Failed to create VM instance.`, {
           position: "bottom-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-          progress: undefined,
-          theme: "dark",
         });
         console.error("Failed to create VM instance:", res.data);
       }
@@ -178,22 +201,24 @@ export const RentVM = () => {
   if (!wallet || !localStorage.getItem("token")) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-          <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-          >
-              <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-              <p className="text-muted-foreground mb-6">Please connect your wallet and ensure you are signed in to proceed.</p>
-              <Link to="/signin">
-                  <Button className="cursor-pointer">SignIn</Button>
-              </Link>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
+          <p className="text-muted-foreground mb-6">
+            Please connect your wallet and ensure you are signed in to proceed.
+          </p>
+          <Link to="/signin">
+            <Button className="cursor-pointer">SignIn</Button>
+          </Link>
+        </motion.div>
       </div>
     );
   }
 
-  if(paymentStatus === "Pending") {
+  if (paymentStatus === "Pending") {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
         <motion.div
@@ -204,7 +229,9 @@ export const RentVM = () => {
           <div className="flex flex-col items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-2" />
             <h1 className="text-3xl font-bold mb-4">Processing Payment</h1>
-            <p className="text-muted-foreground mb-6">Please wait while we process your payment...</p>
+            <p className="text-muted-foreground mb-6">
+              Please wait while we process your payment...
+            </p>
           </div>
         </motion.div>
       </div>
@@ -219,7 +246,9 @@ export const RentVM = () => {
         className="mb-8"
       >
         <h1 className="text-3xl font-bold mb-2">Rent VM Instance</h1>
-        <p className="text-muted-foreground">Deploy your virtual machine with predefined configurations</p>
+        <p className="text-muted-foreground">
+          Deploy your virtual machine with predefined configurations
+        </p>
       </motion.div>
 
       {/* Progress Steps */}
@@ -233,14 +262,16 @@ export const RentVM = () => {
               transition={{ delay: index * 0.1 }}
               className="flex items-center space-x-4"
             >
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                currentStep === step.number 
-                  ? 'bg-primary text-primary-foreground' 
-                  : currentStep > step.number
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-muted text-muted-foreground'
-              }`}>
-                {currentStep > step.number ? '✓' : step.number}
+              <div
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                  currentStep === step.number
+                    ? "bg-primary text-primary-foreground"
+                    : currentStep > step.number
+                      ? "bg-emerald-500 text-white"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {currentStep > step.number ? "✓" : step.number}
               </div>
               {index < steps.length - 1 && (
                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -248,10 +279,14 @@ export const RentVM = () => {
             </motion.div>
           ))}
         </div>
-        
+
         <div className="text-center">
-          <h2 className="text-xl font-semibold mb-2">{steps[currentStep - 1].title}</h2>
-          <p className="text-muted-foreground text-sm">{steps[currentStep - 1].description}</p>
+          <h2 className="text-xl font-semibold mb-2">
+            {steps[currentStep - 1].title}
+          </h2>
+          <p className="text-muted-foreground text-sm">
+            {steps[currentStep - 1].description}
+          </p>
         </div>
       </div>
 
@@ -272,7 +307,9 @@ export const RentVM = () => {
               setOs={setOs}
               isNameAvailable={isNameAvailable}
               selectedVMConfig={selectedVMConfig || null}
-              setSelectedVMConfig={(config) => setSelectedConfig(config?.id || "")}
+              setSelectedVMConfig={(config) =>
+                setSelectedConfig(config?.id || "")
+              }
               setStep={setCurrentStep}
               selectedConfig={selectedConfig}
               setSelectedConfig={setSelectedConfig}
@@ -326,7 +363,7 @@ export const RentVM = () => {
         </div>
 
         {/* Cost Summary Sidebar */}
-        <CostSummary  
+        <CostSummary
           selectedVMConfig={selectedVMConfig || null}
           costPerMin={costPerMin}
           duration={duration}
@@ -342,8 +379,8 @@ export const RentVM = () => {
         setIsCredentialsOpen={setIsCredentialsOpen}
         vmName={vmName}
         region={region}
-        finalConfig={finalConfig} 
+        finalConfig={finalConfig}
       />
     </div>
   );
-}
+};

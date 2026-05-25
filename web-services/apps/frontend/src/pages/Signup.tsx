@@ -1,81 +1,72 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Mail, User, ArrowRight, WalletIcon } from 'lucide-react';
-import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { useWallet } from '@solana/wallet-adapter-react';
-import '@solana/wallet-adapter-react-ui/styles.css';
-import axios from 'axios';
-import { BACKEND_URL } from '@/config';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Mail, User, ArrowRight, WalletIcon } from "lucide-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { useWallet } from "@solana/wallet-adapter-react";
+import "@solana/wallet-adapter-react-ui/styles.css";
+import axios from "axios";
+import { BACKEND_URL } from "@/config";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export function SignUp() {
-    const wallet = useWallet();
-    const navigate = useNavigate();
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-    });
+  const wallet = useWallet();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+  });
 
-    const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsLoading(true);
-        if (!wallet.connected) {
-            alert("Please connect your wallet first.");
-            setIsLoading(false);
-            return;
-        }
-        try {
-          const res = await axios.post(`${BACKEND_URL}/user/signup`, {
-            ...formData,
-            publicKey: wallet.publicKey?.toString(),
-          });
-          if (res.status === 200) {
-            toast.success("Account created successfully!", {
-              position: "bottom-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "dark",
-            });
-            localStorage.setItem('token', `Bearer ${res.data.token}`);
-            localStorage.setItem('email', formData.email);
-            setFormData({ name: '', email: '' });
-            navigate('/dashboard'); 
-          } else {
-            toast.error("Failed to create account. Please try again.", {
-              position: "bottom-right",
-              autoClose: 3000,
-              hideProgressBar: false,
-              closeOnClick: true,
-              pauseOnHover: true,
-              draggable: true,
-              progress: undefined,
-              theme: "dark",
-            });
-          }
-        } catch (error) {
-          console.error("Error creating account:", error);
-        }
-        setIsLoading(false);
-    };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    if (!wallet.connected) {
+      alert("Please connect your wallet first.");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      const res = await axios.post(`${BACKEND_URL}/user/signup`, {
+        ...formData,
+        publicKey: wallet.publicKey?.toString(),
+      });
+      if (res.status === 200) {
+        toast.success("Account created successfully!", {
+          position: "bottom-right",
+        });
+        localStorage.setItem("token", `Bearer ${res.data.token}`);
+        localStorage.setItem("email", formData.email);
+        setFormData({ name: "", email: "" });
+        navigate("/dashboard");
+      } else {
+        toast.error("Failed to create account. Please try again.", {
+          position: "bottom-right",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating account:", error);
+    }
+    setIsLoading(false);
+  };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setFormData(prev => ({
-            ...prev,
-            [e.target.name]: e.target.value
-        }));
-    };
-
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-background to-muted/30 p-4 mt-10">
@@ -92,17 +83,21 @@ export function SignUp() {
       >
         <Card className="backdrop-blur-sm bg-card/80 border-border/50 shadow-2xl">
           <CardHeader className="text-center space-y-4">
-            <motion.div
-              className="flex items-center justify-center space-x-2"
-            >
+            <motion.div className="flex items-center justify-center space-x-2">
               <div className="flex items-center justify-center w-10 h-10 rounded-full">
-                <img src="/Logo.png" alt="Logo" className="h-10 w-10 rounded-full" />
+                <img
+                  src="/Logo.png"
+                  alt="Logo"
+                  className="h-10 w-10 rounded-full"
+                />
               </div>
               <span className="text-2xl font-bold">SolNet</span>
             </motion.div>
-            
+
             <motion.div>
-              <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
+              <CardTitle className="text-2xl font-bold">
+                Create Account
+              </CardTitle>
               <CardDescription className="text-muted-foreground">
                 Join the decentralized cloud revolution
               </CardDescription>
@@ -111,19 +106,29 @@ export function SignUp() {
 
           <CardContent className="space-y-6">
             <motion.div>
-                {wallet.connected ? 
-                    <div className='flex items-center justify-center mb-4 cursor-pointer' onClick={() => wallet.disconnect()}>
-                        <img src={wallet.wallet?.adapter.icon} alt="Wallet Icon" className="h-8 w-8 rounded-full mr-2" />
-                        {wallet?.publicKey?.toString().slice(0,10).concat("...") || ""}
-                    </div>
-                    : 
-                    <div className='flex items-center justify-center mb-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 group rounded-lg'>
-                      <WalletMultiButton className='rounded-2xl w-full bg-primary'>
-                          <WalletIcon className="h-8 w-8 text-white"/>
-                          <span className="ml-2 text-lg font-semibold ">Connect Wallet</span>
-                      </WalletMultiButton>
-                    </div>
-                }
+              {wallet.connected ? (
+                <div
+                  className="flex items-center justify-center mb-4 cursor-pointer"
+                  onClick={() => wallet.disconnect()}
+                >
+                  <img
+                    src={wallet.wallet?.adapter.icon}
+                    alt="Wallet Icon"
+                    className="h-8 w-8 rounded-full mr-2"
+                  />
+                  {wallet?.publicKey?.toString().slice(0, 10).concat("...") ||
+                    ""}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center mb-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white border-0 group rounded-lg">
+                  <WalletMultiButton className="rounded-2xl w-full bg-primary">
+                    <WalletIcon className="h-8 w-8 text-white" />
+                    <span className="ml-2 text-lg font-semibold ">
+                      Connect Wallet
+                    </span>
+                  </WalletMultiButton>
+                </div>
+              )}
             </motion.div>
 
             <motion.form onSubmit={handleSubmit} className="space-y-4">
@@ -164,7 +169,9 @@ export function SignUp() {
               <Button
                 type="submit"
                 className="w-full group cursor-pointer"
-                disabled={!formData.email || !formData.name || !wallet?.connected}
+                disabled={
+                  !formData.email || !formData.name || !wallet?.connected
+                }
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
@@ -182,8 +189,11 @@ export function SignUp() {
 
             <motion.div className="text-center">
               <p className="text-sm text-muted-foreground">
-                Already have an account?{' '}
-                <a href="/signin" className="text-primary hover:underline font-medium">
+                Already have an account?{" "}
+                <a
+                  href="/signin"
+                  className="text-primary hover:underline font-medium"
+                >
                   Sign in
                 </a>
               </p>
@@ -191,11 +201,11 @@ export function SignUp() {
 
             <motion.div className="text-center">
               <p className="text-xs text-muted-foreground">
-                By creating an account, you agree to our{' '}
+                By creating an account, you agree to our{" "}
                 <a href="#terms" className="text-primary hover:underline">
                   Terms of Service
-                </a>{' '}
-                and{' '}
+                </a>{" "}
+                and{" "}
                 <a href="#privacy" className="text-primary hover:underline">
                   Privacy Policy
                 </a>

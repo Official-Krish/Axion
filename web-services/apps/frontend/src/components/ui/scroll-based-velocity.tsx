@@ -24,6 +24,7 @@ interface ParallaxProps extends React.HTMLAttributes<HTMLDivElement> {
   baseVelocity: number;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const wrap = (min: number, max: number, v: number) => {
   const rangeSize = max - min;
   return ((((v - min) % rangeSize) + rangeSize) % rangeSize) + min;
@@ -110,18 +111,15 @@ export function VelocityScroll({
   return (
     <div
       className={cn(
-      "relative w-full text-xs font-bold tracking-[-0.02em] md:text-xl md:leading-[3rem]",
-      className,
+        "relative w-full text-xs font-bold tracking-[-0.02em] md:text-xl md:leading-[3rem]",
+        className,
       )}
       {...props}
     >
       {Array.from({ length: numRows }).map((_, i) => (
-      <ParallaxText
-        key={i}
-        baseVelocity={defaultVelocity * -1} 
-      >
-        {children}
-      </ParallaxText>
+        <ParallaxText key={i} baseVelocity={defaultVelocity * -1}>
+          {children}
+        </ParallaxText>
       ))}
     </div>
   );

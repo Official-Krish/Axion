@@ -1,23 +1,30 @@
 import { Button } from "../ui/button";
 import { ChevronLeft, ChevronRight, Zap } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "../ui/dialog";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import axios from "axios";
 import { BACKEND_URL } from "@/config";
 
 interface NavigationButtonProps {
-    currentStep: number;
-    setCurrentStep: (step: number) => void;
-    canProceedToStep2: string;
-    isConfirmOpen: boolean;
-    setIsConfirmOpen: (open: boolean) => void;
-    costPerMin: Number;
-    duration: number;
-    handlePayment: () => void;
-    canProceedToStep3: boolean;
-    paymentType: "duration" | "escrow";
-    escrowAmount?: number;
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  canProceedToStep2: string;
+  isConfirmOpen: boolean;
+  setIsConfirmOpen: (open: boolean) => void;
+  costPerMin: number;
+  duration: number;
+  handlePayment: () => void;
+  canProceedToStep3: boolean;
+  paymentType: "duration" | "escrow";
+  escrowAmount?: number;
 }
 
 export const NavigationButton = ({
@@ -31,11 +38,10 @@ export const NavigationButton = ({
   canProceedToStep3,
   paymentType,
   escrowAmount = 0,
-  costPerMin = 0
-
+  costPerMin = 0,
 }: NavigationButtonProps) => {
   return (
-    <motion.div 
+    <motion.div
       className="flex justify-between pt-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -72,44 +78,45 @@ export const NavigationButton = ({
             <DialogHeader>
               <DialogTitle>Confirm Deployment</DialogTitle>
               <DialogDescription>
-                You're about to deploy your VM instance with the following {paymentType === "duration" ? "cost" : "escrow deposit"}.
+                You're about to deploy your VM instance with the following{" "}
+                {paymentType === "duration" ? "cost" : "escrow deposit"}.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
               <div className="text-center">
                 <div className="text-3xl font-bold font-mono mb-2">
-                  {paymentType === "duration" ?
-                    `≈ ${(Number(costPerMin) * duration).toFixed(3)} SOL`
-                     :
-                    `Escrow Deposit: ${escrowAmount} SOL`
-                  }
+                  {paymentType === "duration"
+                    ? `≈ ${(Number(costPerMin) * duration).toFixed(3)} SOL`
+                    : `Escrow Deposit: ${escrowAmount} SOL`}
                 </div>
               </div>
-              <Button className="w-full cursor-pointer" 
+              <Button
+                className="w-full cursor-pointer"
                 onClick={async () => {
-                  const res = await axios.get(`${BACKEND_URL}/user/checkTimeout`, {
-                    headers: {
-                      Authorization: `${localStorage.getItem("token")}`,
+                  const res = await axios.get(
+                    `${BACKEND_URL}/user/checkTimeout`,
+                    {
+                      headers: {
+                        Authorization: `${localStorage.getItem("token")}`,
+                      },
                     },
-                  });
+                  );
                   if (res.data.error) {
-                    toast.error("You can only create a VM once every 12 hours", {
-                      position: "bottom-right",
-                      autoClose: 3000,
-                      hideProgressBar: false,
-                      closeOnClick: true,
-                      pauseOnHover: true,
-                      draggable: true,
-                      progress: undefined,
-                      theme: "dark",
-                    });
+                    toast.error(
+                      "You can only create a VM once every 12 hours",
+                      {
+                        position: "bottom-right",
+                      },
+                    );
                     setIsConfirmOpen(false);
                     return;
                   }
                   handlePayment();
                 }}
               >
-                {paymentType === "duration" ? "Confirm & Pay with Solana" : "Create Escrow Contract"}
+                {paymentType === "duration"
+                  ? "Confirm & Pay with Solana"
+                  : "Create Escrow Contract"}
               </Button>
             </div>
           </DialogContent>
@@ -117,4 +124,4 @@ export const NavigationButton = ({
       )}
     </motion.div>
   );
-}
+};

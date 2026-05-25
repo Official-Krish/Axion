@@ -12,9 +12,15 @@
     "worker": "cd ./apps/worker && bun run index.ts",
     "ws-relayer": "cd ./apps/ws-relayer && bun run index.ts",
     "depin-worker": "cd ./apps/depin-worker && bun run index.ts",
-    "depin-ws-relayer": "cd ./apps/depin-ws-relayer && bun run index.ts"
+    "depin-ws-relayer": "cd ./apps/depin-ws-relayer && bun run index.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": "bunx prettier --write"
   },
   "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.5",
     "prettier": "^3.6.0",
     "turbo": "^2.5.4",
     "typescript": "5.8.2"

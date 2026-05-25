@@ -15,7 +15,7 @@ export function Contarct(wallet: AnchorWallet): Program {
   const connection = new Connection(clusterApiUrl("devnet"));
   const provider = new AnchorProvider(connection, wallet, {});
 
-  const program = new Program(idl as any, provider);
+  const program = new Program(idl as Idl, provider);
 
   return program;
 }

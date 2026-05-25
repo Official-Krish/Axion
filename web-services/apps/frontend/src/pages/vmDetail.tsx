@@ -1,4 +1,3 @@
-
 import { motion } from "framer-motion";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,14 +18,17 @@ export function VMDetails() {
   const { id } = useParams();
   const [vm, setVm] = useState<VM>();
 
-  useEffect(()=> {
+  useEffect(() => {
     const fetchVMDetails = async () => {
       try {
-        const response = await axios.get(`${BACKEND_URL}/vmInstance/getDetails?id=${id}`, {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
+        const response = await axios.get(
+          `${BACKEND_URL}/vmInstance/getDetails?id=${id}`,
+          {
+            headers: {
+              Authorization: `${localStorage.getItem("token")}`,
+            },
           },
-        });
+        );
         setVm(response.data.vmInstance);
       } catch (error) {
         console.error("Error fetching VM details:", error);
@@ -34,12 +36,14 @@ export function VMDetails() {
     };
 
     fetchVMDetails();
-  },[])
+  }, [id]);
 
   if (!vm) {
     return (
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-center text-muted-foreground">Loading VM details...</p>
+        <p className="text-center text-muted-foreground">
+          Loading VM details...
+        </p>
       </div>
     );
   }
@@ -53,7 +57,9 @@ export function VMDetails() {
           className="text-center"
         >
           <h1 className="text-3xl font-bold mb-4">VM Deleted</h1>
-          <p className="text-muted-foreground mb-6">This virtual machine has been deleted.</p>
+          <p className="text-muted-foreground mb-6">
+            This virtual machine has been deleted.
+          </p>
           <Link to="/dashboard">
             <Button className="cursor-pointer">Back to Dashboard</Button>
           </Link>
@@ -65,17 +71,19 @@ export function VMDetails() {
   if (!wallet || !localStorage.getItem("token")) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-          <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-center"
-          >
-              <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-              <p className="text-muted-foreground mb-6">Please connect your wallet and ensure you are signed in to proceed.</p>
-              <Link to="/signin">
-                  <Button className="cursor-pointer">SignIn</Button>
-              </Link>
-          </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
+          <p className="text-muted-foreground mb-6">
+            Please connect your wallet and ensure you are signed in to proceed.
+          </p>
+          <Link to="/signin">
+            <Button className="cursor-pointer">SignIn</Button>
+          </Link>
+        </motion.div>
       </div>
     );
   }
@@ -96,7 +104,6 @@ export function VMDetails() {
 
         {/* Sidebar */}
         <Sidebar vm={vm} />
-        
       </div>
     </div>
   );
