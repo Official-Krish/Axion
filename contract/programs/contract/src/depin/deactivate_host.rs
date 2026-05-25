@@ -1,11 +1,11 @@
-use::anchor_lang::prelude::*;
-use crate::{constants::ADMIN_PUBKEY, errors::DepinErrors, state::HostMachineRegistration};
+use anchor_lang::prelude::*;
+use crate::{constants::ADMIN_PUBKEY, errors::{DepinErrors, Errors}, state::HostMachineRegistration};
 
 pub fn deactivate_host(
     ctx: Context<DeactivateHost>,
     id: String,
 ) -> Result<()> {
-    let host = &mut ctx.accounts.host;
+    let host = &ctx.accounts.host;
     let host_machine = &mut ctx.accounts.host_machine;
     let user = &ctx.accounts.user;
 
@@ -37,8 +37,10 @@ pub fn deactivate_host(
         DepinErrors::HostMachineRegistrationNotActiveLongEnough
     );
     let time = (timestamp - host_machine.started_at) as u64;
-    let reward = (time / 3600) * host_machine.sol_per_hour;
-    host_machine.earned += reward as u64;
+    let reward = (time / 3600).checked_mul(host_machine.sol_per_hour)
+        .ok_or(Errors::ArithmeticOverflow)?;
+    host_machine.earned = host_machine.earned.checked_add(reward)
+        .ok_or(Errors::ArithmeticOverflow)?;
     host_machine.started_at = 0; 
     msg!("Host machine {} deactivated. Earned: {}", id, host_machine.earned);
     Ok(())

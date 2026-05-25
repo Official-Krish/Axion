@@ -31,7 +31,8 @@ pub fn transfer_to_vault_and_rent(
     rental_session.duration_seconds = duration_seconds;
     rental_session.is_active = true;
     rental_session.id = id;
-    rental_session.end_time = rental_session.start_time + duration_seconds;
+    rental_session.end_time = rental_session.start_time.checked_add(duration_seconds)
+        .ok_or(Errors::ArithmeticOverflow)?;
 
     let borrowd_id = rental_session.id.as_bytes();
 
@@ -65,7 +66,7 @@ pub struct TransferToVaultAndRent<'info> {
     #[account(
         init_if_needed,
         payer = payer,
-        space = 8 + 32 + 40 + 8 + 8 + 8 + 8 + 1 + 1,
+        space = 8 + RentalSession::SIZE,
         seeds = [b"rental_session", payer.key().as_ref(), id.as_bytes()],
         bump
     )]

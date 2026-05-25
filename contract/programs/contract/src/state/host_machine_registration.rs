@@ -17,5 +17,5 @@ pub struct HostMachineRegistration {
 }
 
 impl HostMachineRegistration {
-    pub const SIZE: usize = 1 + 32 + 4 + 32 + 4 + 32 + 4 + 32 + 8 + 1 + 32 + 8 + 8 + 1 + 8;
+    pub const SIZE: usize = 1 + 32 + 4 + 32 + 4 + 32 + 4 + 32 + 8 + 1 + 4 + 32 + 8 + 8 + 1 + 8;
 }

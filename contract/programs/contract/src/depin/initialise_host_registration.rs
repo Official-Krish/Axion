@@ -63,7 +63,7 @@ pub struct InitialiseHostRegistration<'info> {
     #[account(
         init,
         payer = admin,
-        space = HostMachineRegistration::SIZE,
+        space = 8 + HostMachineRegistration::SIZE,
         seeds = [b"host_machine", user_key.key().as_ref(), id.as_bytes()],
         bump
     )]

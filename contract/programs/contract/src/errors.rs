@@ -64,6 +64,8 @@ pub enum DepinErrors {
     HostMachineRegistrationNotFoundForId,
     #[msg("Host machine penalized")]
     HostMachinePenalized,
+    #[msg("Host machine is already active")]
+    HostMachineAlreadyActive,
     #[msg("Host machine should not be active for claiming earned rewards")]
     HostMachineShouldNotBeActiveForClaiming,
 }

@@ -1,4 +1,4 @@
-use::anchor_lang::prelude::*;
+use anchor_lang::prelude::*;
 
 use crate::{constants::ADMIN_PUBKEY, errors::DepinErrors, state::HostMachineRegistration};
 
@@ -21,7 +21,7 @@ pub fn activate_host(
     );
     require!(
         host_machine.is_active == false,
-        DepinErrors::HostMachineRegistrationNotActive
+        DepinErrors::HostMachineAlreadyActive
     );
     require!(
         host_machine.id == id,

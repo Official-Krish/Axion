@@ -4,7 +4,7 @@ use crate::{constants::ADMIN_PUBKEY, errors::Errors, state::VaultAccount};
 
 pub fn withdraw_funds(ctx: Context<WithdrawFunds>, amount: u64, _secret_key: String) -> Result<()> {
     require!(ctx.accounts.admin.key() == ADMIN_PUBKEY, Errors::Unauthorized);
-    
+
     let vault_account = &mut ctx.accounts.vault_account;
     let vault_balance = vault_account.to_account_info().lamports();
     require!(vault_balance >= amount, Errors::InsufficientFunds);

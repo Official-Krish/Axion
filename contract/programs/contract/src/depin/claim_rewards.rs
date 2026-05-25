@@ -1,4 +1,4 @@
-use::anchor_lang::prelude::*;
+use anchor_lang::prelude::*;
 use crate::{errors::{DepinErrors, Errors}, state::{HostMachineRegistration, VaultAccount}};
 
 pub fn claim_rewards(
@@ -33,14 +33,17 @@ pub fn claim_rewards(
     );
 
     require!(
-        **vault_account.to_account_info().lamports.borrow() >= host_machine.earned,
+        vault_account.to_account_info().lamports() >= host_machine.earned,
         Errors::InsufficientFunds
     );
-    **vault_account.to_account_info().try_borrow_mut_lamports()? -= host_machine.earned;
-    **host.to_account_info().try_borrow_mut_lamports()? += host_machine.earned;
+    let earned = host_machine.earned;
+    **vault_account.to_account_info().try_borrow_mut_lamports()? = vault_account.to_account_info().lamports().checked_sub(earned)
+        .ok_or(Errors::ArithmeticOverflow)?;
+    **host.to_account_info().try_borrow_mut_lamports()? = host.to_account_info().lamports().checked_add(earned)
+        .ok_or(Errors::ArithmeticOverflow)?;
     host_machine.earned = 0;
 
-    msg!("Claimed {} rewards for host {}", host_machine.earned, host.key());
+    msg!("Claimed {} rewards for host {}", earned, host.key());
     Ok(())
 }
 

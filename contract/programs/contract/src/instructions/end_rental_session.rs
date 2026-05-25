@@ -25,6 +25,7 @@ pub struct EndRentalSession<'info> {
         bump = rental_session.bump,
         constraint = rental_session.is_active @ Errors::RentalExpired,
         constraint = rental_session.user == _user_pub_key @ Errors::Unauthorized,
+        constraint = payer.key() == _user_pub_key @ Errors::Unauthorized,
     )]
     pub rental_session: Account<'info, RentalSession>,
 }
