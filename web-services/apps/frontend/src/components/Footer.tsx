@@ -1,200 +1,242 @@
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { FaDiscord, FaGithub, FaXTwitter } from "react-icons/fa6";
+import { useState } from "react";
+import {
+  IconBrandX,
+  IconBrandDiscord,
+  IconBrandGithub,
+  IconCircleCheck,
+} from "@tabler/icons-react";
+import { AxionLogo } from "./AxionLogo";
 
-function Footer() {
-  const socialLinks = [
-    {
-      name: "Twitter",
-      icon: FaXTwitter,
-      href: "https://x.com/KrishAnand0103",
-      color: "hover:text-blue-500",
-    },
-    {
-      name: "Discord",
-      icon: FaDiscord,
-      href: "#",
-      color: "hover:text-indigo-500",
-    },
-    {
-      name: "GitHub",
-      icon: FaGithub,
-      href: "https://github.com/Official-Krish",
-      color: "hover:text-zinc-700 dark:hover:text-gray-400",
-    },
-  ];
+interface SiteFooterProps {
+  systemStatus?: "operational" | "degraded" | "outage";
+  onSubscribe?: (email: string) => Promise<void>;
+}
 
-  const footerLinks = [
-    {
-      title: "Product",
-      links: [
-        { name: "Dashboard", href: "/dashboard" },
-        { name: "Rent VM", href: "/rent" },
-        { name: "DePIN Hosting", href: "/hosting" },
-        { name: "Pricing", href: "/pricing" },
-      ],
-    },
-    {
-      title: "Resources",
-      links: [
-        { name: "Documentation", href: "/docs" },
-        { name: "API Reference", href: "/api" },
-        { name: "Tutorials", href: "/tutorials" },
-        { name: "Status", href: "/status" },
-      ],
-    },
-    {
-      title: "Company",
-      links: [
-        { name: "About", href: "/about" },
-        { name: "Blog", href: "/blog" },
-        { name: "Careers", href: "/careers" },
-        { name: "Contact", href: "/contact" },
-      ],
-    },
-    {
-      title: "Legal",
-      links: [
-        { name: "Privacy Policy", href: "/privacy" },
-        { name: "Terms of Service", href: "/terms" },
-        { name: "Cookie Policy", href: "/cookies" },
-        { name: "GDPR", href: "/gdpr" },
-      ],
-    },
-  ];
+const linkGroups = [
+  {
+    label: "Product",
+    links: [
+      { name: "Dashboard", href: "/dashboard" },
+      { name: "Rent vm", href: "/rent" },
+      { name: "Depin hosting", href: "/hosting" },
+      { name: "Pricing", href: "/pricing" },
+    ],
+  },
+  {
+    label: "Resources",
+    links: [
+      { name: "Documentation", href: "/docs" },
+      { name: "Api reference", href: "/api" },
+      { name: "Tutorials", href: "/tutorials" },
+      { name: "Status", href: "/status" },
+    ],
+  },
+  {
+    label: "Company",
+    links: [
+      { name: "About", href: "/about" },
+      { name: "Blog", href: "/blog" },
+      { name: "Careers", href: "/careers" },
+      { name: "Contact", href: "/contact" },
+    ],
+  },
+  {
+    label: "Legal",
+    links: [
+      { name: "Privacy policy", href: "/privacy" },
+      { name: "Terms of service", href: "/terms" },
+      { name: "Cookie policy", href: "/cookies" },
+      { name: "Gdpr", href: "/gdpr" },
+    ],
+  },
+];
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
+export function SiteFooter({
+  systemStatus = "operational",
+  onSubscribe,
+}: SiteFooterProps) {
+  const [email, setEmail] = useState("");
+  const [subscribed, setSubscribed] = useState(false);
+  const [subscribing, setSubscribing] = useState(false);
+
+  const handleSubscribe = async () => {
+    if (!email || subscribing) return;
+    setSubscribing(true);
+    try {
+      if (onSubscribe) {
+        await onSubscribe(email);
+      } else {
+        await new Promise((r) => setTimeout(r, 600));
+      }
+      setSubscribed(true);
+    } finally {
+      setSubscribing(false);
+    }
   };
 
+  const statusColors = {
+    operational: { dot: "#14F195", text: "All systems operational" },
+    degraded: { dot: "#FBB924", text: "Partial system degradation" },
+    outage: { dot: "#F87171", text: "Service disruption detected" },
+  };
+
+  const status = statusColors[systemStatus];
+
   return (
-    <footer className="bg-background border-t">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          className="py-16"
-        >
-          {/* Main footer content */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-8 mb-12">
-            {/* Brand section */}
-            <motion.div className="lg:col-span-2">
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="flex items-center justify-center rounded-full">
-                  <img
-                    src="/Logo.png"
-                    alt="DeCloud Logo"
-                    className="w-9 h-9 rounded-full"
-                  />
-                </div>
-                <span className="text-xl font-bold">SolNet</span>
-              </div>
-              <p className="text-muted-foreground mb-6 max-w-sm">
-                Decentralized cloud computing powered by Solana. Rent compute
-                resources or earn SOL by sharing your hardware.
-              </p>
+    <footer className="bg-[#0A0A10]">
+      <div className="border-t" />
 
-              {/* Social links */}
-              <div className="flex space-x-4">
-                {socialLinks.map((social) => (
-                  <motion.div
-                    key={social.name}
-                    whileHover="hover"
-                    className="border border-zinc-200 dark:border-gray-800 rounded-full"
-                  >
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`transition-colors duration-200 ${social.color}`}
-                      asChild
-                    >
-                      <a href={social.href} aria-label={social.name}>
-                        <social.icon className="h-5 w-5" />
-                      </a>
-                    </Button>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-x-10 gap-y-12">
+          <div className="lg:col-span-4 lg:pr-10">
+            <div className="flex items-center gap-2 mb-3">
+              <AxionLogo size={32} />
+              <span className="text-white text-xl font-medium tracking-tight">
+                Axion
+              </span>
+            </div>
+            <p className="text-[13px] leading-relaxed text-[rgba(255,255,255,0.4)] mb-6 max-w-xs">
+              Decentralized compute on Solana.
+            </p>
 
-            {/* Footer links */}
-            {footerLinks.map((section) => (
-              <motion.div key={section.title}>
-                <h3 className="font-semibold text-foreground mb-4">
-                  {section.title}
-                </h3>
-                <ul className="space-y-3">
-                  {section.links.map((link) => (
-                    <li key={link.name}>
-                      <a
-                        href={link.href}
-                        className="text-muted-foreground hover:text-foreground transition-colors duration-200"
-                      >
-                        {link.name}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+            <div className="flex items-center gap-3">
+              <a
+                href="https://x.com/KrishAnand0103"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="X (Twitter)"
+                className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
+              >
+                <IconBrandX className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
+              </a>
+              <a
+                href="#"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Discord"
+                className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
+              >
+                <IconBrandDiscord className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
+              </a>
+              <a
+                href="https://github.com/Official-Krish"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="GitHub"
+                className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
+              >
+                <IconBrandGithub className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
+              </a>
+            </div>
           </div>
 
-          {/* Newsletter signup */}
-          <motion.div className="border-t border-border pt-8 mb-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div className="mb-4 md:mb-0">
-                <h3 className="text-lg font-semibold mb-2">Stay updated</h3>
-                <p className="text-muted-foreground">
-                  Get the latest updates on new features and network
-                  improvements.
-                </p>
+          {linkGroups.map((group) => (
+            <div key={group.label} className="lg:col-span-2">
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-[2px] h-3 rounded-full bg-[#14F195]" />
+                <span className="text-[13px] font-medium text-white">
+                  {group.label}
+                </span>
               </div>
-              <div className="flex flex-col sm:flex-row gap-3 max-w-md">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  className="flex-1 px-4 py-2 bg-background border border-input rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <Button className="whitespace-nowrap">Subscribe</Button>
-              </div>
+              <ul className="space-y-[28px]">
+                {group.links.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      rel="noopener noreferrer"
+                      className="text-[13px] font-normal text-[rgba(255,255,255,0.45)] hover:text-white transition-colors duration-120"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
-          </motion.div>
+          ))}
+        </div>
 
-          {/* Bottom section */}
-          <motion.div className="border-t border-border pt-8 flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-4 md:mb-0">
-              <p className="text-muted-foreground text-sm">
-                Built with ❤️ for the Solana community.
+        <div className="mt-16 pt-8 border-t border-[rgba(255,255,255,0.06)]">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-[15px] font-medium text-white">
+                Stay in the loop
               </p>
-              <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                <span>© 2025 SolNet</span>
-                <span>•</span>
-                <span>All rights reserved</span>
-              </div>
+              <p className="text-[13px] text-[rgba(255,255,255,0.4)] mt-0.5">
+                Network updates, new regions, and compute pricing changes.
+              </p>
             </div>
+            <div className="shrink-0 w-full md:w-auto">
+              {subscribed ? (
+                <div className="flex items-center gap-2 text-[13px] text-[#14F195]">
+                  <IconCircleCheck className="w-4 h-4" />
+                  <span>You're in. We'll keep it signal, no spam.</span>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") handleSubscribe();
+                    }}
+                    placeholder="your@email.com"
+                    className="h-10 w-64 bg-[#0A0A10] border border-[rgba(255,255,255,0.1)] rounded-[10px] px-3 text-[13px] text-white placeholder:text-[rgba(255,255,255,0.25)] font-mono outline-none focus:border-[#14F195] transition-colors duration-120"
+                  />
+                  <button
+                    onClick={handleSubscribe}
+                    disabled={subscribing || !email}
+                    className="h-10 w-[120px] bg-[#14F195] text-[#070B0A] rounded-[10px] text-[13px] font-semibold hover:opacity-85 transition-opacity duration-120 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {subscribing ? "Sending..." : "Subscribe"}
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
 
-            <div className="flex items-center space-x-6 text-sm">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                className="flex items-center space-x-2 text-muted-foreground"
-              >
-                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                <span>All systems operational</span>
-              </motion.div>
-            </div>
-          </motion.div>
-        </motion.div>
+        <div className="mt-8 py-5 border-t border-[rgba(255,255,255,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-[12px] text-[rgba(255,255,255,0.25)]">
+            <span>© 2025 Axion</span>
+            <span className="text-[rgba(255,255,255,0.12)]">·</span>
+            <span>All rights reserved</span>
+            <span className="text-[rgba(255,255,255,0.12)]">·</span>
+            <span>Built on</span>
+            <svg
+              width="48"
+              height="12"
+              viewBox="0 0 397 100"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="opacity-30"
+            >
+              <path
+                d="M64.6 11.2c-1.1-1.1-2.6-1.7-4.2-1.7H10.8c-2.7 0-4 3.2-2.1 5.1l49.6 49.6c1.1 1.1 2.6 1.7 4.2 1.7h49.6c2.7 0 4-3.2 2.1-5.1L64.6 11.2zM10.8 41.8c-1.6 0-3.1.6-4.2 1.7L1.7 48.4c-1.1 1.1-1.7 2.6-1.7 4.2v49.6c0 2.7 3.2 4 5.1 2.1l49.6-49.6c1.1-1.1 1.7-2.6 1.7-4.2V11.2c0-2.7-3.2-4-5.1-2.1L15 40.1c-1.1 1.1-2.6 1.7-4.2 1.7z"
+                fill="currentColor"
+              />
+            </svg>
+          </div>
+          <a
+            href="/status"
+            className="flex items-center gap-2 text-[12px] text-[rgba(255,255,255,0.4)] hover:text-white transition-colors duration-120"
+          >
+            <span className="relative w-2 h-2">
+              <span
+                className="absolute inset-0 rounded-full"
+                style={{ backgroundColor: status.dot }}
+              />
+              <span
+                className="absolute inset-0 rounded-full animate-ping"
+                style={{ backgroundColor: status.dot, opacity: 0.6 }}
+              />
+            </span>
+            {status.text}
+          </a>
+        </div>
       </div>
     </footer>
   );
 }
-export default Footer;
+
+export default SiteFooter;

@@ -109,7 +109,7 @@ export const CredentialModal = ({
                     size="sm"
                     onClick={() => {
                       copyToClipboard(
-                        `ssh -i ${vmName}-key.pem solnet@${finalConfig?.ipAddress}`,
+                        `ssh -i ${vmName}-key.pem axion@${finalConfig?.ipAddress}`,
                       );
                     }}
                   >
@@ -117,7 +117,7 @@ export const CredentialModal = ({
                   </Button>
                 </div>
                 <div className="bg-black text-green-400 p-3 rounded font-mono text-sm">
-                  ssh -i ${vmName}-key.pem solnet@${finalConfig?.ipAddress}
+                  ssh -i ${vmName}-key.pem axion@${finalConfig?.ipAddress}
                 </div>
               </div>
 
@@ -182,7 +182,7 @@ export const CredentialModal = ({
                   </div>
                   <div className="bg-muted p-1 rounded font-mono text-xs mt-1 flex justify-between items-center">
                     <span className="font-mono">
-                      ssh -i {vmName}-key.pem solnet@{finalConfig?.ipAddress}
+                      ssh -i {vmName}-key.pem axion@{finalConfig?.ipAddress}
                     </span>
                     <Button
                       variant="ghost"
@@ -190,7 +190,7 @@ export const CredentialModal = ({
                       className="cursor-pointer"
                       onClick={() =>
                         copyToClipboard(
-                          `ssh -i ${vmName}-key.pem solnet@${finalConfig?.ipAddress}`,
+                          `ssh -i ${vmName}-key.pem axion@${finalConfig?.ipAddress}`,
                         )
                       }
                     >

@@ -18,6 +18,7 @@ import axios from "axios";
 import { BACKEND_URL } from "@/config";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { AxionLogo } from "@/components/AxionLogo";
 
 export function SignUp() {
   const wallet = useWallet();
@@ -85,13 +86,9 @@ export function SignUp() {
           <CardHeader className="text-center space-y-4">
             <motion.div className="flex items-center justify-center space-x-2">
               <div className="flex items-center justify-center w-10 h-10 rounded-full">
-                <img
-                  src="/Logo.png"
-                  alt="Logo"
-                  className="h-10 w-10 rounded-full"
-                />
+                <AxionLogo size={40} />
               </div>
-              <span className="text-2xl font-bold">SolNet</span>
+              <span className="text-2xl font-bold">Axion</span>
             </motion.div>
 
             <motion.div>

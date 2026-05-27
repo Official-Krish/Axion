@@ -21,22 +21,27 @@ function Metric({ value, suffix, label, sublabel, delay = 0 }: MetricProps) {
       initial={{ opacity: 0, y: 20 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
-      className="group"
+      className="group pl-4 border-l-2 border-[#9945FF]/40"
     >
       <div ref={containerRef as React.RefObject<HTMLDivElement>}>
-        <div className="flex items-end gap-1 mb-2">
+        <div className="flex items-end gap-1 mb-1">
+          {/* Trend arrow */}
+          <span className="text-emerald-500 text-sm mb-1.5 mr-0.5 font-mono">
+            ↑
+          </span>
           <span
             ref={ref}
             className="text-5xl md:text-6xl font-light text-zinc-950 dark:text-white tabular-nums"
           >
             0
           </span>
-          <span className="text-2xl md:text-3xl text-[#9945FF] font-light mb-1">
+          {/* Smaller muted suffix */}
+          <span className="text-lg md:text-xl text-[#9945FF]/70 font-light mb-1.5">
             {suffix}
           </span>
         </div>
       </div>
-      <p className="text-zinc-900 dark:text-white text-sm font-medium mb-1">
+      <p className="text-zinc-900 dark:text-white text-sm font-medium mb-0.5">
         {label}
       </p>
       <p className="text-zinc-500 text-xs">{sublabel}</p>
@@ -76,18 +81,43 @@ export default function LiveMetrics() {
   ];
 
   return (
-    <section className="border-t border-black/[0.06] dark:border-white/[0.06] bg-transparent py-32 px-6">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative border-t border-black/[0.06] dark:border-white/[0.06] bg-transparent py-32 px-6 overflow-hidden">
+      {/* Radial glow behind stats */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 50% at 50% 60%, rgba(153,69,255,0.07) 0%, transparent 70%)",
+        }}
+      />
+      {/* Dot grid */}
+      <div
+        aria-hidden
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, rgba(153,69,255,0.12) 1px, transparent 1px)",
+          backgroundSize: "28px 28px",
+          opacity: 0.35,
+        }}
+      />
+
+      <div className="relative max-w-6xl mx-auto">
         <motion.div
           ref={sectionRef}
           initial={{ opacity: 0, y: 16 }}
           animate={inView ? { opacity: 1, y: 0 } : {}}
           transition={{ duration: 0.6 }}
-          className="mb-20"
+          className="mb-12"
         >
-          <span className="text-xs tracking-widest text-[#9945FF] uppercase mb-4 block">
-            Network Stats
-          </span>
+          {/* Section label with left accent bar */}
+          <div className="flex items-center gap-2.5 mb-4">
+            <div className="w-0.5 h-4 bg-[#9945FF] rounded-full" />
+            <span className="text-xs tracking-[0.14em] text-[#9945FF] uppercase">
+              Network Stats
+            </span>
+          </div>
           <h2 className="text-3xl md:text-4xl font-light text-zinc-950 dark:text-white max-w-lg leading-tight">
             Infrastructure that{" "}
             <span className="text-zinc-400 dark:text-zinc-600">
@@ -96,18 +126,21 @@ export default function LiveMetrics() {
           </h2>
         </motion.div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-12 md:gap-8">
+        {/* Divider between headline and stats */}
+        <div className="h-px bg-black/[0.06] dark:bg-white/[0.08] mb-12" />
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-10 md:gap-8">
           {metrics.map((m, i) => (
             <Metric key={m.label} {...m} delay={i * 0.1} />
           ))}
         </div>
 
-        {/* Activity bar */}
+        {/* Activity bar — with top+bottom borders */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={inView ? { opacity: 1 } : {}}
           transition={{ delay: 0.8, duration: 0.6 }}
-          className="mt-20 border-t border-black/[0.06] dark:border-white/[0.08] pt-8"
+          className="mt-20 border-t border-b border-white/[0.15] dark:border-white/[0.15] py-5"
         >
           <div className="flex items-center justify-between text-xs text-zinc-400 dark:text-zinc-600 mb-3">
             <span className="font-mono">Network activity</span>
@@ -116,20 +149,24 @@ export default function LiveMetrics() {
             </span>
           </div>
           <div className="flex items-end gap-0.5 h-8">
-            {Array.from({ length: 60 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="flex-1 rounded-full bg-[#9945FF]"
-                animate={{ scaleY: [0.2, Math.random() * 0.8 + 0.2, 0.2] }}
-                transition={{
-                  repeat: Infinity,
-                  duration: 1.5 + Math.random(),
-                  delay: i * 0.02,
-                  ease: "easeInOut",
-                }}
-                style={{ transformOrigin: "bottom" }}
-              />
-            ))}
+            {Array.from({ length: 60 }).map((_, i) => {
+              // Alternate green (healthy) / amber (degraded) dots for the ticker
+              const isHealthy = i % 7 !== 3;
+              return (
+                <motion.div
+                  key={i}
+                  className={`flex-1 rounded-full ${isHealthy ? "bg-[#9945FF]" : "bg-amber-400"}`}
+                  animate={{ scaleY: [0.2, Math.random() * 0.8 + 0.2, 0.2] }}
+                  transition={{
+                    repeat: Infinity,
+                    duration: 1.5 + Math.random(),
+                    delay: i * 0.02,
+                    ease: "easeInOut",
+                  }}
+                  style={{ transformOrigin: "bottom" }}
+                />
+              );
+            })}
           </div>
         </motion.div>
       </div>

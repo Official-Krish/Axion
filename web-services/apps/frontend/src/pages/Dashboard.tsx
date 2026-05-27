@@ -128,7 +128,7 @@ export function Dashboard() {
               New VM
             </Button>
           </Link>
-          <Link to="/depin/deploy">
+          <Link to="/docker/deploy">
             <Button className="mt-4 sm:mt-0 cursor-pointer dark:bg-white dark:hover:bg-gray-100">
               <Plus className="h-4 w-4 mr-2" />
               Deploy Image

@@ -63,7 +63,7 @@ export default function FinalCTA() {
           className="flex flex-col items-center gap-6"
         >
           <Link
-            to="/rent-vm"
+            to="/rent"
             className="group inline-flex items-center gap-2.5 bg-zinc-950 hover:bg-zinc-800 text-white px-8 py-3.5 rounded-full text-sm font-medium transition-all duration-300"
           >
             Launch Console

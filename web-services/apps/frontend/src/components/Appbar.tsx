@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { motion, useMotionValueEvent, useScroll } from "framer-motion";
-import { NavbarItems } from "./NavbarItems";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useLocation } from "react-router-dom";
-import UserProfileDropdown from "./user-dropdown";
+import ProfileDropdown from "./user-dropdown";
 import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
+import { AxionLogo } from "./AxionLogo";
 
 export const Appbar = () => {
   const { wallet } = useWallet();
@@ -17,9 +17,8 @@ export const Appbar = () => {
 
   const navItems = [
     { name: "Dashboard", link: "/dashboard" },
-    { name: "Rent VM", link: "/rent" },
-    { name: "Deploy Container", link: "/depin/deploy" },
-    { name: "Earn with Hardware" },
+    { name: "Compute", link: "/rent" },
+    { name: "Host", link: "/host" },
   ];
 
   useMotionValueEvent(scrollY, "change", (latest) => {
@@ -29,7 +28,7 @@ export const Appbar = () => {
   return (
     <div className="fixed top-0 left-0 right-0 z-50">
       <motion.div
-        className={`w-full px-4 py-2 backdrop-blur-md
+        className={`w-full px-4 py-1.5 backdrop-blur-md
           bg-white/80 dark:bg-neutral-950/80
           ${
             scrolled
@@ -46,27 +45,21 @@ export const Appbar = () => {
         <div className="flex justify-between items-center">
           {/* Logo */}
           <div
-            className="flex items-center gap-2 p-4 cursor-pointer"
+            className="flex items-center gap-2 px-4 py-3 cursor-pointer"
             onClick={() => (window.location.href = "/")}
           >
-            <img
-              src="https://assets.krishdev.xyz/DeCloud/Logo.png"
-              className="rounded-full"
-              alt="logo"
-              width={30}
-              height={30}
-            />
+            <AxionLogo size={36} />
             <span className="font-medium text-zinc-950 dark:text-white">
-              SolNet
+              Axion
             </span>
           </div>
 
           {/* Nav items */}
-          <div className="flex items-center max-w-xl">
+          <div className="flex items-center gap-1.5 whitespace-nowrap shrink-0 max-w-xl">
             {navItems.map((item, idx) => (
               <motion.div
                 key={item.name}
-                className="relative px-4 py-2 text-zinc-600 hover:text-zinc-950 dark:text-neutral-300 dark:hover:text-white cursor-pointer transition-colors"
+                className="relative shrink-0 px-4 py-1.5 whitespace-nowrap text-zinc-600 hover:text-zinc-950 dark:text-neutral-300 dark:hover:text-white cursor-pointer transition-colors"
                 onMouseEnter={() => setHovered(idx)}
                 onMouseLeave={() => setHovered(null)}
                 onClick={() => item.link && (window.location.href = item.link)}
@@ -77,28 +70,25 @@ export const Appbar = () => {
                     layoutId="nav-item"
                   />
                 )}
-                {item.name !== "Earn with Hardware" && (
-                  <span className="relative flex items-center gap-1.5">
-                    {location.pathname === item.link && (
-                      <motion.span
-                        layoutId="nav-dot"
-                        className="w-1.5 h-1.5 rounded-full bg-violet-500"
-                      />
-                    )}
-                    {item.name}
-                  </span>
-                )}
-                {item.name === "Earn with Hardware" && <NavbarItems />}
+                <span className="relative flex items-center gap-1.5 whitespace-nowrap">
+                  {location.pathname === item.link && (
+                    <motion.span
+                      layoutId="nav-dot"
+                      className="w-1.5 h-1.5 rounded-full bg-violet-500"
+                    />
+                  )}
+                  {item.name}
+                </span>
               </motion.div>
             ))}
           </div>
 
           {/* CTA / Wallet */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
             <AnimatedThemeToggler />
             {localStorage.getItem("token") && wallet?.adapter.connected ? (
               <button
-                className="space-x-2 flex items-center cursor-pointer text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2 py-2 rounded-xl transition-colors"
+                className="flex items-center gap-2 shrink-0 max-w-[15rem] overflow-hidden whitespace-nowrap cursor-pointer text-zinc-700 bg-zinc-100 hover:bg-zinc-200 dark:text-neutral-200 dark:bg-neutral-800 dark:hover:bg-neutral-700 px-2 py-1.5 rounded-xl transition-colors"
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
               >
                 <img
@@ -106,11 +96,14 @@ export const Appbar = () => {
                   alt="Wallet Address"
                   className="h-8 w-8 rounded-full"
                 />
-                <span className="ml-2 text-sm font-semibold">
+                <span className="min-w-0 truncate text-sm font-semibold">
                   {wallet?.adapter.publicKey
                     ?.toString()
-                    .slice(0, 10)
-                    .concat("...") || ""}
+                    .slice(0, 4)
+                    .concat("...")
+                    .concat(
+                      wallet?.adapter.publicKey?.toString().slice(-4) || "",
+                    ) || ""}
                 </span>
               </button>
             ) : (
@@ -129,7 +122,7 @@ export const Appbar = () => {
             )}
           </div>
 
-          <UserProfileDropdown
+          <ProfileDropdown
             isOpen={userDropdownOpen}
             onClose={() => setUserDropdownOpen(false)}
           />

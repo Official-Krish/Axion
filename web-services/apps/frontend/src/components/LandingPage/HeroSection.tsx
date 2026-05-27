@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useEffect, useRef, type ReactNode } from "react";
+import { motion } from "motion/react";
 import { Link } from "react-router-dom";
+import MiniWorldMap from "./MiniWorldMap";
 
 /* ──────────────────────────────────────────────
    Mask-reveal — clip text up from below.
@@ -26,26 +27,6 @@ function Reveal({
       </motion.span>
     </span>
   );
-}
-
-/* Lightweight count-up. */
-function useCountUp(target: number, trigger: boolean, duration = 1800) {
-  const [value, setValue] = useState(0);
-  useEffect(() => {
-    if (!trigger) return;
-    const start = performance.now();
-    let raf: number;
-    const tick = () => {
-      const elapsed = performance.now() - start;
-      const t = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      setValue(target * eased);
-      if (t < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [target, trigger, duration]);
-  return value;
 }
 
 /* ──────────────────────────────────────────────
@@ -242,145 +223,6 @@ function ParticleField() {
 }
 
 /* ──────────────────────────────────────────────
-   Cycling tagline.
-   ────────────────────────────────────────────── */
-const TAGLINES = [
-  "Run ML workloads.",
-  "Host Docker containers.",
-  "Deploy in seconds.",
-  "Scale across regions.",
-];
-
-function CyclingTagline() {
-  const [idx, setIdx] = useState(0);
-  useEffect(() => {
-    const i = setInterval(() => setIdx((p) => (p + 1) % TAGLINES.length), 2600);
-    return () => clearInterval(i);
-  }, []);
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ delay: 0.45, duration: 0.6 }}
-      className="flex items-center gap-2.5 text-sm text-zinc-600 dark:text-white/60 mb-10 font-mono"
-    >
-      <span className="text-zinc-500 dark:text-white/40 text-xs uppercase tracking-[0.18em]">
-        Built for
-      </span>
-      <span className="relative inline-block min-w-[220px] h-5 overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={idx}
-            initial={{ y: "100%", opacity: 0 }}
-            animate={{ y: "0%", opacity: 1 }}
-            exit={{ y: "-100%", opacity: 0 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="absolute inset-0 text-zinc-900 dark:text-white"
-          >
-            {TAGLINES[idx]}
-          </motion.span>
-        </AnimatePresence>
-      </span>
-    </motion.div>
-  );
-}
-
-/* ──────────────────────────────────────────────
-   Live ops card — dark theme with animated counters.
-   ────────────────────────────────────────────── */
-const REGIONS = [
-  { id: "us-east-1", city: "N. Virginia", latency: "12ms" },
-  { id: "eu-west-2", city: "London", latency: "18ms" },
-  { id: "ap-northeast-1", city: "Tokyo", latency: "32ms" },
-  { id: "us-west-2", city: "Oregon", latency: "8ms" },
-];
-
-function LiveOpsCard() {
-  const [idx, setIdx] = useState(0);
-  const [trigger, setTrigger] = useState(false);
-
-  useEffect(() => {
-    const t = setTimeout(() => setTrigger(true), 700);
-    const i = setInterval(() => setIdx((p) => (p + 1) % REGIONS.length), 2400);
-    return () => {
-      clearTimeout(t);
-      clearInterval(i);
-    };
-  }, []);
-
-  const nodes = useCountUp(2847, trigger);
-  const vms = useCountUp(14209, trigger);
-  const sol = useCountUp(1824.6, trigger);
-  const region = REGIONS[idx];
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.6, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="bg-black/[0.04] dark:bg-white/[0.04] backdrop-blur-sm border border-black/[0.08] dark:border-white/10 rounded-2xl p-5 w-full max-w-[300px]"
-    >
-      <div className="flex items-center justify-between mb-5">
-        <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-500 dark:text-white/40">
-          Network
-        </span>
-        <span className="flex items-center gap-1.5 text-[10px] tracking-wider text-amber-400">
-          <span className="relative flex w-1.5 h-1.5">
-            <motion.span
-              className="absolute inset-0 rounded-full bg-amber-400"
-              animate={{ scale: [1, 2.4, 1], opacity: [0.5, 0, 0] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-            />
-            <span className="relative w-1.5 h-1.5 rounded-full bg-amber-400" />
-          </span>
-          DEVNET LIVE
-        </span>
-      </div>
-
-      <div className="space-y-3">
-        <Row label="Active nodes" value={Math.round(nodes).toLocaleString()} />
-        <Row label="VMs running" value={Math.round(vms).toLocaleString()} />
-        <Row label="SOL / 24h" value={sol.toFixed(1)} />
-
-        <div className="h-px bg-black/[0.08] dark:bg-white/10 my-4" />
-
-        <div className="flex items-baseline justify-between text-xs">
-          <span className="text-zinc-600 dark:text-white/50">
-            Nearest region
-          </span>
-          <AnimatePresence mode="wait">
-            <motion.span
-              key={region.id}
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-              className="font-mono text-zinc-900 dark:text-white text-right"
-            >
-              {region.city}
-              <span className="text-zinc-400 dark:text-white/40 ml-2">
-                {region.latency}
-              </span>
-            </motion.span>
-          </AnimatePresence>
-        </div>
-      </div>
-    </motion.div>
-  );
-}
-
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between text-xs">
-      <span className="text-zinc-600 dark:text-white/50">{label}</span>
-      <span className="font-mono text-zinc-900 dark:text-white tabular-nums">
-        {value}
-      </span>
-    </div>
-  );
-}
-
-/* ──────────────────────────────────────────────
    Region ticker — dark variant.
    ────────────────────────────────────────────── */
 function RegionTicker() {
@@ -456,7 +298,7 @@ export default function HeroSection() {
       <div className="flex-1 flex items-center max-w-7xl mx-auto w-full px-6 lg:px-12 pt-32 pb-20 relative z-10">
         <div className="grid lg:grid-cols-12 gap-x-12 gap-y-16 items-center w-full">
           {/* Content */}
-          <div className="lg:col-span-8 relative">
+          <div className="lg:col-span-7 relative">
             {/* Background node visualization */}
             <div className="absolute inset-0 -z-10 overflow-hidden rounded-2xl">
               <NodeField />
@@ -475,31 +317,33 @@ export default function HeroSection() {
                 }}
               />
             </div>
+
+            {/* Badge / pill */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="flex items-center gap-3 mb-12"
+              className="inline-flex items-center gap-2.5 mb-6 px-3 py-1.5 rounded-full border border-black/[0.08] dark:border-white/10 bg-black/[0.03] dark:bg-white/[0.04] backdrop-blur-sm"
             >
-              <span className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-zinc-600 dark:text-white/60">
-                <span className="relative flex w-1.5 h-1.5">
-                  <motion.span
-                    className="absolute inset-0 rounded-full bg-amber-400"
-                    animate={{ scale: [1, 2.6, 1], opacity: [0.5, 0, 0] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                  />
-                  <span className="relative w-1.5 h-1.5 rounded-full bg-amber-400" />
-                </span>
-                Devnet · Early Access
+              <span className="relative flex w-1.5 h-1.5">
+                <motion.span
+                  className="absolute inset-0 rounded-full bg-emerald-400"
+                  animate={{ scale: [1, 2.6, 1], opacity: [0.6, 0, 0] }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                />
+                <span className="relative w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.7)]" />
               </span>
-              <span className="h-3 w-px bg-white/15" />
-              <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-500 dark:text-white/45">
+              <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-700 dark:text-white/70 font-mono">
+                Live on Devnet
+              </span>
+              <span className="text-zinc-400 dark:text-white/30">—</span>
+              <span className="text-[11px] uppercase tracking-[0.18em] text-zinc-500 dark:text-white/45 font-mono">
                 Solana DePIN
               </span>
             </motion.div>
 
-            {/* Headline with light gradient on first line */}
-            <h1 className="text-[clamp(2.75rem,8.2vw,7rem)] font-light tracking-[-0.045em] leading-[0.95] mb-8">
+            {/* Headline */}
+            <h2 className="text-[clamp(2.5rem,7.4vw,6.25rem)] font-light tracking-[-0.045em] leading-[0.98] mb-6">
               <Reveal delay={0.1}>
                 <span
                   className="dark:hidden"
@@ -511,7 +355,7 @@ export default function HeroSection() {
                     backgroundClip: "text",
                   }}
                 >
-                  Decentralized compute.
+                  The World's Compute Layer.
                 </span>
                 <span
                   className="hidden dark:inline"
@@ -523,36 +367,36 @@ export default function HeroSection() {
                     backgroundClip: "text",
                   }}
                 >
-                  Decentralized compute.
+                  The World's Compute Layer.
                 </span>
               </Reveal>
               <Reveal delay={0.25} className="text-zinc-500 dark:text-white/40">
-                Paid in{" "}
+                Powered by{" "}
                 <span className="text-[#9945FF] dark:text-[#C4B5FD] font-normal">
-                  SOL
+                  Solana
                 </span>
                 .
               </Reveal>
-            </h1>
+            </h2>
 
-            {/* Cycling tagline */}
-            <CyclingTagline />
-
+            {/* Subheadline */}
             <motion.p
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
-                delay: 0.55,
+                delay: 0.45,
                 duration: 0.6,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="text-zinc-700 dark:text-white/65 text-base lg:text-lg max-w-md leading-relaxed mb-8 font-light"
+              className="text-zinc-800 dark:text-white/80 text-lg lg:text-xl max-w-xl leading-snug mb-4 font-light"
             >
-              Rent virtual machines in seconds. Or monetize idle hardware on a
-              global DePIN network. No accounts. No invoices. Just compute.
+              Spin up bare-metal VMs in seconds.{" "}
+              <span className="text-zinc-500 dark:text-white/45">
+                No KYC. No contracts. Just compute.
+              </span>
             </motion.p>
 
-            {/* Price teaser */}
+            {/* Pricing strip */}
             <motion.div
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
@@ -561,19 +405,21 @@ export default function HeroSection() {
                 duration: 0.6,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-10 text-sm"
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 mb-10"
             >
               <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-black/[0.04] dark:bg-white/[0.04] backdrop-blur-sm border border-black/[0.08] dark:border-white/10">
-                <span className="text-white/50 text-xs">Starting at</span>
-                <span className="text-zinc-900 dark:text-white font-mono font-medium">
+                <span className="text-zinc-500 dark:text-white/50 text-xs">
+                  From
+                </span>
+                <span className="text-zinc-900 dark:text-white font-mono font-medium text-sm">
                   ~0.05 SOL
                 </span>
                 <span className="text-zinc-500 dark:text-white/40 text-xs">
                   / hr
                 </span>
               </span>
-              <span className="text-zinc-500 dark:text-white/40 text-xs">
-                · Per-second billing · Cancel anytime
+              <span className="text-zinc-500 dark:text-white/45 text-xs font-mono">
+                · Billed per second · Cancel instantly
               </span>
             </motion.div>
 
@@ -589,11 +435,11 @@ export default function HeroSection() {
               className="flex items-center gap-7"
             >
               <Link
-                to="/rent-vm"
+                to="/rent"
                 className="group relative inline-flex items-center gap-2.5 bg-zinc-950 dark:bg-white text-white dark:text-zinc-950 px-7 py-3.5 rounded-full text-sm font-medium hover:bg-zinc-800 dark:hover:bg-white/90 transition-all duration-300"
               >
-                <span className="absolute inset-0 rounded-full bg-[#9945FF] blur-xl opacity-30 group-hover:opacity-60 transition-opacity" />
-                <span className="relative">Launch Console</span>
+                <span className="absolute inset-0 rounded-full blur-xl opacity-30 group-hover:opacity-60 transition-opacity" />
+                <span className="relative">Start Computing</span>
                 <svg
                   className="w-3.5 h-3.5 relative transition-transform duration-300 group-hover:translate-x-0.5"
                   fill="none"
@@ -610,9 +456,9 @@ export default function HeroSection() {
               </Link>
               <Link
                 to="/hosting"
-                className="group inline-flex items-center gap-2 text-zinc-700 dark:text-white/65 hover:text-white text-sm transition-colors duration-200"
+                className="group inline-flex items-center gap-2 text-zinc-700 dark:text-white/65 hover:text-zinc-950 dark:hover:text-white text-sm transition-colors duration-200"
               >
-                <span>Become a host</span>
+                <span>Earn by Hosting</span>
                 <svg
                   className="w-3.5 h-3.5 -mr-0.5 opacity-50 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0.5"
                   fill="none"
@@ -630,9 +476,9 @@ export default function HeroSection() {
             </motion.div>
           </div>
 
-          {/* Live ops card */}
-          <div className="lg:col-span-4 lg:flex justify-end hidden">
-            <LiveOpsCard />
+          {/* Mini world map */}
+          <div className="lg:col-span-5 lg:flex justify-end hidden">
+            <MiniWorldMap />
           </div>
         </div>
       </div>
