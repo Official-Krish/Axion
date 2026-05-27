@@ -17,10 +17,19 @@ interface Connection {
 
 const connections = new Map<ServerWebSocket, Connection>();
 const userSessions = new WeakMap<ServerWebSocket, Session>();
+const allClients = new Set<ServerWebSocket>();
+// Map pubkey -> set of subscribed clients for filtered indexer events
+const pubkeySubscriptions = new Map<string, Set<ServerWebSocket>>();
 
 type incomingMessage = {
-  type: "authenticate" | "connect" | "command" | "disconnect";
+  type:
+    | "authenticate"
+    | "connect"
+    | "command"
+    | "disconnect"
+    | "subscribe-indexer";
   token?: string;
+  pubkey?: string;
   config?: {
     host: string;
     port?: number;
@@ -32,9 +41,56 @@ type incomingMessage = {
 const SSH_READY_TIMEOUT_MS = 10000;
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+const INDEXER_TOKEN = process.env.INDEXER_TOKEN || "changeme";
 
 Bun.serve({
   fetch(req, server) {
+    const url = new URL(req.url);
+
+    // HTTP POST endpoint for indexer events
+    if (req.method === "POST" && url.pathname === "/indexer-event") {
+      if (req.headers.get("x-indexer-token") !== INDEXER_TOKEN) {
+        return new Response("Unauthorized", { status: 401 });
+      }
+      return req
+        .json()
+        .then((body) => {
+          const message = JSON.stringify({ type: "indexer-event", data: body });
+          const accounts: string[] = body.accounts || [];
+
+          // Find clients subscribed to any account in this event
+          const targetClients = new Set<ServerWebSocket>();
+          for (const account of accounts) {
+            const subs = pubkeySubscriptions.get(account);
+            if (subs) {
+              for (const client of subs) targetClients.add(client);
+            }
+          }
+
+          console.log(
+            `[WS-Relayer] Broadcasting ${body.instruction} to ${targetClients.size} clients`,
+          );
+
+          for (const client of targetClients) {
+            try {
+              client.send(message);
+            } catch (_) {
+              allClients.delete(client);
+            }
+          }
+          return new Response("ok", { status: 200 });
+        })
+        .catch(() => new Response("Invalid JSON", { status: 400 }));
+    }
+
+    // Health check
+    if (req.method === "GET" && url.pathname === "/health") {
+      return new Response(
+        JSON.stringify({ status: "ok", clients: allClients.size }),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
+
     if (server.upgrade(req)) {
       return;
     }
@@ -47,6 +103,18 @@ Bun.serve({
 
         if (data.type === "authenticate") {
           authenticateUser(ws as ServerWebSocket<undefined>, data.token!);
+        } else if (data.type === "subscribe-indexer") {
+          // Subscribe this client to indexer events for their pubkey
+          const pubkey = data.pubkey;
+          if (pubkey) {
+            if (!pubkeySubscriptions.has(pubkey)) {
+              pubkeySubscriptions.set(pubkey, new Set());
+            }
+            pubkeySubscriptions
+              .get(pubkey)!
+              .add(ws as ServerWebSocket<undefined>);
+            ws.send(JSON.stringify({ type: "subscribed", pubkey }));
+          }
         } else if (data.type === "connect") {
           connectToVM(ws as ServerWebSocket<undefined>, data.config!);
         } else if (data.type === "command") {
@@ -60,6 +128,7 @@ Bun.serve({
       }
     },
     open(ws) {
+      allClients.add(ws as ServerWebSocket<undefined>);
       ws.send(
         JSON.stringify({
           type: "status",
@@ -68,6 +137,11 @@ Bun.serve({
       );
     },
     close(ws) {
+      allClients.delete(ws as ServerWebSocket<undefined>);
+      // Remove from pubkey subscriptions
+      for (const [, subs] of pubkeySubscriptions) {
+        subs.delete(ws as ServerWebSocket<undefined>);
+      }
       disconnectFromVM(ws as ServerWebSocket<undefined>);
     },
   },
