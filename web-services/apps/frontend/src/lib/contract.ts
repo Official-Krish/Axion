@@ -4,7 +4,7 @@ import idl from "../../idl/contract.json";
 import { type AnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "bn.js";
 import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { ADMIN_KEY, SECRET_KEY } from "@/config";
+import { getAdminPublicKey, SECRET_KEY } from "@/config";
 
 // const network = clusterApiUrl('devnet');
 
@@ -118,7 +118,7 @@ export const transferFromVault = async (
     const tx = await program.methods
       .transferFromVault(new BN(amount * LAMPORTS_PER_SOL), id, SECRET_KEY)
       .accounts({
-        admin: new PublicKey(ADMIN_KEY),
+        admin: getAdminPublicKey(),
         payer: wallet.publicKey,
       })
       .rpc();
@@ -212,7 +212,7 @@ export const TransferToVaultAndStartRental = async (
         SECRET_KEY,
       )
       .accounts({
-        admin: new PublicKey(ADMIN_KEY),
+        admin: getAdminPublicKey(),
         payer: wallet.publicKey,
       })
       .rpc();
