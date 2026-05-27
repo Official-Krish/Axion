@@ -18,6 +18,7 @@ import { TransferToVaultAndStartRental } from "@/lib/contract";
 
 import { Step2 } from "@/components/RentVm/Step2";
 import { StartRentalSessionWithEscrow } from "@/lib/Escrow";
+import { usePaymentConfirmation } from "@/lib/useIndexerEvents";
 
 export const RentVM = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -38,8 +39,17 @@ export const RentVM = () => {
     "duration",
   );
   const [escrowAmount, setEscrowAmount] = useState(0);
+  const [currentVmId, setCurrentVmId] = useState<string | null>(null);
 
   const wallet = useAnchorWallet();
+
+  // Real-time on-chain payment confirmation from indexer
+  const onChainStatus = usePaymentConfirmation(
+    currentVmId,
+    paymentType === "duration"
+      ? "transfer_to_vault_and_rent"
+      : "start_rental_with_escrow",
+  );
 
   const steps = [
     {
@@ -126,6 +136,7 @@ export const RentVM = () => {
     setIsConfirmOpen(false);
     setPaymentStatus("Pending");
     const id = crypto.randomUUID().substring(0, 32);
+    setCurrentVmId(id);
     const tx =
       paymentType === "duration"
         ? await TransferToVaultAndStartRental(
@@ -229,8 +240,22 @@ export const RentVM = () => {
           <div className="flex flex-col items-center justify-center">
             <Loader2 className="h-12 w-12 animate-spin text-primary mb-2" />
             <h1 className="text-3xl font-bold mb-4">Processing Payment</h1>
-            <p className="text-muted-foreground mb-6">
+            <p className="text-muted-foreground mb-2">
               Please wait while we process your payment...
+            </p>
+            <p className="text-sm text-muted-foreground">
+              On-chain status:{" "}
+              <span
+                className={
+                  onChainStatus === "confirmed"
+                    ? "text-green-500 font-semibold"
+                    : onChainStatus === "failed"
+                      ? "text-red-500 font-semibold"
+                      : "text-yellow-500"
+                }
+              >
+                {onChainStatus}
+              </span>
             </p>
           </div>
         </motion.div>

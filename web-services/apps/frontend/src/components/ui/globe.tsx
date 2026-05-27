@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment, react-hooks/exhaustive-deps */
 // @ts-nocheck
 "use client";
 import { useEffect, useRef } from "react";

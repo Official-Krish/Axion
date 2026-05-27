@@ -12,11 +12,35 @@ import { Overview } from "@/components/vmDetail/Overview";
 import { Hardware } from "@/components/vmDetail/Hardware";
 import { SSH } from "@/components/vmDetail/SSH";
 import { BillingStatus } from "@/components/vmDetail/BillingStatus";
+import { useIndexerEvents } from "@/lib/useIndexerEvents";
+import { toast } from "sonner";
 
 export function VMDetails() {
   const wallet = useAnchorWallet();
   const { id } = useParams();
   const [vm, setVm] = useState<VM>();
+
+  // Real-time status updates for this VM
+  useIndexerEvents({
+    onEvent: (event) => {
+      const eventId = event.args?.id as string;
+      if (eventId !== id) return;
+
+      if (
+        event.instruction === "end_rental_session" ||
+        event.instruction === "finalise_rental_with_escrow" ||
+        event.instruction === "force_terminate_rental"
+      ) {
+        setVm((prev) => (prev ? { ...prev, status: "DELETED" } : prev));
+        toast.info("VM terminated on-chain", { position: "bottom-right" });
+      }
+      if (event.instruction === "top_up_escrow") {
+        toast.success(`Escrow topped up: ${event.args?.amount} lamports`, {
+          position: "bottom-right",
+        });
+      }
+    },
+  });
 
   useEffect(() => {
     const fetchVMDetails = async () => {
