@@ -38,9 +38,10 @@ impl Notifier {
         }
 
         let ws_http_url = self.ws_relayer_url.replace("ws://", "http://").replace("wss://", "https://");
+        let url = format!("{}/indexer-event", ws_http_url);
         if let Err(e) = self
             .client
-            .post(format!("{}/indexer-event", ws_http_url))
+            .post(&url)
             .header("X-Indexer-Token", &self.token)
             .json(event)
             .send()

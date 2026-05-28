@@ -23,7 +23,7 @@ pub async fn run(
 
     let (mut stream, _unsub) = pubsub
         .logs_subscribe(
-            RpcTransactionLogsFilter::Mentions(vec![program_id.to_string()]),
+            RpcTransactionLogsFilter::All,
             RpcTransactionLogsConfig {
                 commitment: Some(CommitmentConfig::confirmed()),
             },
@@ -37,13 +37,21 @@ pub async fn run(
         let logs = log_response.value.logs.clone();
         let success = log_response.value.err.is_none();
 
+
+        if !logs.iter().any(|l| l.contains(program_id)) {
+            continue;
+        }
+
         match fetch_and_parse(&rpc_client, &sig, &logs, success, program_id).await {
             Some(events) => {
+                info!("Parsed {} event(s) for sig={}", events.len(), sig);
                 for event in events {
                     on_event(event);
                 }
             }
-            None => {}
+            None => {
+                warn!("fetch_and_parse returned None for sig={}", sig);
+            }
         }
     }
 

@@ -1,5 +1,7 @@
 use serde::Serialize;
 use solana_client::nonblocking::rpc_client::RpcClient;
+use solana_client::rpc_config::RpcTransactionConfig;
+use solana_sdk::commitment_config::CommitmentConfig;
 use solana_sdk::signature::Signature;
 use solana_transaction_status::UiTransactionEncoding;
 use std::collections::HashMap;
@@ -58,14 +60,27 @@ pub async fn fetch_and_parse(
 ) -> Option<Vec<ParsedEvent>> {
     let instruction_names = parse_instruction_from_logs(logs, program_id);
     if instruction_names.is_empty() {
+        log::warn!("fetch_and_parse: no instructions parsed from logs for sig={}", signature);
         return None;
     }
 
     let sig = Signature::from_str(signature).ok()?;
-    let tx = rpc_client
-        .get_transaction(&sig, UiTransactionEncoding::Base64)
+    let tx = match rpc_client
+        .get_transaction_with_config(
+            &sig,
+            RpcTransactionConfig {
+                encoding: Some(UiTransactionEncoding::Base64),
+                commitment: Some(CommitmentConfig::confirmed()),
+                max_supported_transaction_version: Some(0),
+            },
+        )
         .await
-        .ok()?;
+    {
+        Ok(t) => t,
+        Err(e) => {
+            return None;
+        }
+    };
 
     let slot = tx.slot;
 
