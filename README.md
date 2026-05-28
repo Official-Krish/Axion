@@ -58,6 +58,12 @@ SolNet bridges the gap between traditional cloud computing and Web3 by offering:
 - penalize_host()              // Penalize misbehaving hosts
 ```
 
+### Transaction Indexer
+- **Rust-based**: High-performance on-chain transaction monitoring
+- **Dual Mode**: WebSocket (default) or Yellowstone gRPC
+- **Real-time Parsing**: Identifies all contract instructions via Anchor log parsing
+- **Webhook Notifications**: Pushes events to backend and ws-relayer
+
 ### Backend Services
 - **API Gateway**: RESTful endpoints for VM management
 - **VM Provisioning**: Automated cloud resource allocation
@@ -83,6 +89,16 @@ SolNet/
 │   │   │   └── lib.rs        # Main program entry
 │   │   └── Cargo.toml
 │   └── tests/               # Contract test suites
+├── indexer/                  # Rust transaction indexer
+│   ├── src/
+│   │   ├── main.rs          # Entry point (mode switching)
+│   │   ├── ws.rs            # WebSocket logsSubscribe mode
+│   │   ├── grpc.rs          # Yellowstone gRPC mode (optional)
+│   │   ├── parser.rs        # Anchor log → ParsedEvent
+│   │   ├── instructions.rs  # Contract instruction definitions
+│   │   ├── notifier.rs      # Webhook dispatcher
+│   │   └── config.rs        # Environment config
+│   └── Cargo.toml
 ├── web-services/            # Application services
 │   ├── apps/
 │   │   ├── backend/         # Bun-based API server
@@ -101,6 +117,7 @@ SolNet/
 ### Prerequisites
 - [Node.js](https://nodejs.org/) (v18+)
 - [Bun](https://bun.sh/) (for backend)
+- [Rust](https://rustup.rs/) (v1.88+, for indexer)
 - [Anchor CLI](https://www.anchor-lang.com/docs/installation)
 - [Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
 - [PostgreSQL](https://www.postgresql.org/) database
@@ -171,6 +188,23 @@ cp .env.example .env
 bun dev
 ```
 
+### 5. Transaction Indexer
+
+```bash
+# Navigate to indexer
+cd indexer
+
+# Set environment variables
+cp .env.example .env
+# Edit .env with your configuration
+
+# Run in WebSocket mode (default, connects to devnet)
+RUST_LOG=info cargo run
+
+# Run with gRPC mode (requires Yellowstone endpoint)
+RUST_LOG=info cargo run --features grpc
+```
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -191,6 +225,16 @@ SECRET_KEY = "your-secret-key";
 ADMIN_KEY = "your-admin-key";
 WS_RELAYER_URL = "ws://localhost:9093";
 DEPIN_WORKER = "http://localhost:6000";
+```
+
+#### Indexer (.env)
+```bash
+MODE="ws"                    # "ws" or "grpc"
+SOLANA_WS_URL="wss://api.devnet.solana.com"
+GRPC_ENDPOINT="http://127.0.0.1:10000"
+PROGRAM_ID="your-anchor-program-id"
+BACKEND_WEBHOOK_URL="http://localhost:3000/api/v2/indexer/webhook"
+WS_RELAYER_URL="ws://localhost:9093"
 ```
 
 ## 📊 Database Schema

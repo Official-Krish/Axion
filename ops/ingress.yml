@@ -18,10 +18,7 @@ spec:
         - wss.decloud.krishdev.xyz
       secretName: decloud-ws-relayer-tls
     - hosts:
-        - api.depin.decloud.krishdev.xyz
-      secretName: decloud-depin-worker-tls
-    - hosts:
-        - wss.depin-worker.decloud.krishdev.xyz
+        - wss.depin.decloud.krishdev.xyz
       secretName: decloud-depin-ws-relayer-tls
 
   rules:
@@ -54,17 +51,6 @@ spec:
             backend:
               service:
                 name: decloud-ws-relayer
-                port:
-                  number: 80
-
-    - host: api.depin-worker.decloud.krishdev.xyz
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: decloud-depin-worker
                 port:
                   number: 80
 

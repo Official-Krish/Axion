@@ -86,7 +86,13 @@ Bun.serve({
     // Health check
     if (req.method === "GET" && url.pathname === "/health") {
       return new Response(
-        JSON.stringify({ status: "ok", clients: allClients.size }),
+        JSON.stringify({
+          status: "ok",
+          clients: allClients.size,
+          subscriptions: Object.fromEntries(
+            [...pubkeySubscriptions.entries()].map(([k, v]) => [k, v.size]),
+          ),
+        }),
         { headers: { "Content-Type": "application/json" } },
       );
     }
