@@ -1,6 +1,6 @@
 import { type AnchorWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
-import { ADMIN_KEY, SECRET_KEY } from "@/config";
+import { getAdminPublicKey, SECRET_KEY } from "@/config";
 import { Contarct } from "./contract";
 
 export const claimSolana = async (wallet: AnchorWallet, id: string) => {
@@ -9,7 +9,7 @@ export const claimSolana = async (wallet: AnchorWallet, id: string) => {
     const txn = await program.methods
       .claimRewards(id, SECRET_KEY)
       .accounts({
-        admin: new PublicKey(ADMIN_KEY),
+        admin: getAdminPublicKey(),
         host: wallet.publicKey,
       })
       .rpc();

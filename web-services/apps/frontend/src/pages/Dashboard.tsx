@@ -12,6 +12,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { formatter } from "@/lib/FormatTime";
 import { getVmDetails } from "@/lib/vm";
 import { toast } from "sonner";
+import { useIndexerEvents } from "@/lib/useIndexerEvents";
 
 export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -19,6 +20,43 @@ export function Dashboard() {
   const [vms, setVMs] = useState<VM[]>([]);
   const navigate = useNavigate();
   const wallet = useWallet();
+
+  // Real-time VM status updates from indexer
+  useIndexerEvents({
+    account: wallet.publicKey?.toBase58(),
+    onEvent: (event) => {
+      if (
+        event.instruction === "end_rental_session" ||
+        event.instruction === "finalise_rental_with_escrow" ||
+        event.instruction === "force_terminate_rental"
+      ) {
+        const vmId = event.args?.id as string;
+        if (vmId) {
+          setVMs((prev) =>
+            prev.map((vm) =>
+              vm.id === vmId ? { ...vm, status: "DELETED" } : vm,
+            ),
+          );
+          toast.info(`VM ${vmId.slice(0, 8)}... terminated on-chain`, {
+            position: "bottom-right",
+          });
+        }
+      }
+      if (
+        event.instruction === "transfer_to_vault_and_rent" ||
+        event.instruction === "start_rental_with_escrow"
+      ) {
+        const vmId = event.args?.id as string;
+        if (vmId) {
+          setVMs((prev) =>
+            prev.map((vm) =>
+              vm.id === vmId ? { ...vm, status: "RUNNING" } : vm,
+            ),
+          );
+        }
+      }
+    },
+  });
 
   useEffect(() => {
     if (!wallet || !localStorage.getItem("token")) {
@@ -90,7 +128,7 @@ export function Dashboard() {
               New VM
             </Button>
           </Link>
-          <Link to="/depin/deploy">
+          <Link to="/docker/deploy">
             <Button className="mt-4 sm:mt-0 cursor-pointer dark:bg-white dark:hover:bg-gray-100">
               <Plus className="h-4 w-4 mr-2" />
               Deploy Image
@@ -229,10 +267,10 @@ export function Dashboard() {
             <Button className="cursor-pointer">Create your first VM</Button>
           </Link>
           <Link
-            to="/depin/deploy"
+            to="/docker/deploy"
             className="block mt-4 text-sm text-primary hover:underline"
           >
-            Or deploy a custom image
+            Or deploy a custom docker image
           </Link>
         </motion.div>
       )}

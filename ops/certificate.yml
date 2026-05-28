@@ -8,9 +8,9 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: api.decloud.krishdev.xyz
+  commonName: api.decloud.krishlabs.tech
   dnsNames:
-  - api.decloud.krishdev.xyz
+  - api.decloud.krishlabs.tech
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -22,9 +22,9 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: wss.decloud.krishdev.xyz
+  commonName: wss.decloud.krishlabs.tech
   dnsNames:
-  - wss.decloud.krishdev.xyz
+  - wss.decloud.krishlabs.tech
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
@@ -36,20 +36,6 @@ spec:
   issuerRef:
     name: letsencrypt-prod
     kind: ClusterIssuer
-  commonName: wss.depin.decloud.krishdev.xyz
+  commonName: wss.depin.decloud.krishlabs.tech
   dnsNames:
-  - wss.depin.decloud.krishdev.xyz
----
-apiVersion: cert-manager.io/v1
-kind: Certificate
-metadata:
-  name: decloud-depin-worker-cert
-  namespace: decloud
-spec:
-  secretName: decloud-depin-worker-tls
-  issuerRef:
-    name: letsencrypt-prod
-    kind: ClusterIssuer
-  commonName: api.depin.decloud.krishdev.xyz
-  dnsNames:
-  - api.depin.decloud.krishdev.xyz
+  - wss.depin.decloud.krishlabs.tech

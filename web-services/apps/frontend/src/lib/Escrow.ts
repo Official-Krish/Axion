@@ -1,7 +1,7 @@
 import { type AnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "bn.js";
-import { LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { ADMIN_KEY, SECRET_KEY } from "@/config";
+import { LAMPORTS_PER_SOL } from "@solana/web3.js";
+import { getAdminPublicKey, SECRET_KEY } from "@/config";
 import { Contarct } from "./contract";
 
 export const StartRentalSessionWithEscrow = async (
@@ -10,15 +10,13 @@ export const StartRentalSessionWithEscrow = async (
   id: string,
 ) => {
   const program = Contarct(wallet);
-
   try {
     const tx = await program.methods
       .startRentalWithEscrow(new BN(amount * LAMPORTS_PER_SOL), id)
-      .accounts({
-        payer: wallet.publicKey,
-        admin: new PublicKey(ADMIN_KEY),
-      })
+      .accounts({ payer: wallet.publicKey, admin: getAdminPublicKey() })
       .rpc();
+    const conf = await program.provider.connection.confirmTransaction(tx);
+    if (conf.value.err) return null;
     return {
       success: true,
       signature: tx,
@@ -36,15 +34,13 @@ export const TopUpEscrowSession = async (
   amount: number,
 ) => {
   const program = Contarct(wallet);
-
   try {
     const tx = await program.methods
       .topUpEscrow(id, new BN(amount * LAMPORTS_PER_SOL))
-      .accounts({
-        user: wallet.publicKey,
-        admin: new PublicKey(ADMIN_KEY),
-      })
+      .accounts({ user: wallet.publicKey, admin: getAdminPublicKey() })
       .rpc();
+    const conf = await program.provider.connection.confirmTransaction(tx);
+    if (conf.value.err) return null;
     return {
       success: true,
       signature: tx,
@@ -62,7 +58,6 @@ export const FinalizeRentalWithEscrow = async (
   amount: number,
 ) => {
   const program = Contarct(wallet);
-
   try {
     const tx = await program.methods
       .finaliseRentalWithEscrow(
@@ -70,11 +65,10 @@ export const FinalizeRentalWithEscrow = async (
         new BN(amount * LAMPORTS_PER_SOL),
         SECRET_KEY,
       )
-      .accounts({
-        user: wallet.publicKey,
-        admin: new PublicKey(ADMIN_KEY),
-      })
+      .accounts({ user: wallet.publicKey, admin: getAdminPublicKey() })
       .rpc();
+    const conf = await program.provider.connection.confirmTransaction(tx);
+    if (conf.value.err) return null;
     return {
       success: true,
       signature: tx,

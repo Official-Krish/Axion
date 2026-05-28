@@ -1,148 +1,163 @@
-import { motion } from "framer-motion";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Server, Download, Shield, User } from "lucide-react";
+import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useWallet } from "@solana/wallet-adapter-react";
 
+const STEPS = [
+  {
+    n: "01",
+    title: "Register your machine",
+    desc: "Sign in with your Solana wallet, enter hardware specs — CPU, RAM, storage, region. Takes under 2 minutes.",
+    cta: "Register now",
+    href: "/depin/register",
+  },
+  {
+    n: "02",
+    title: "Run the verification script",
+    desc: "One command installs the Axion node daemon and verifies your machine's resources on-chain.",
+    code: "curl -sSL https://assets.krishlabs.tech/DeCloud/verification_script.sh | bash",
+  },
+  {
+    n: "03",
+    title: "Go live, earn SOL",
+    desc: "Once verified and activated, your node appears in the DePIN pool. SOL accumulates every second compute is consumed.",
+    cta: "View dashboard",
+    href: "/depin/host/dashboard",
+  },
+];
+
 export function Hosting() {
-    const wallet = useWallet();
+  const wallet = useWallet();
 
-    const steps = [
-        {
-            icon: User,
-            title: "Register as Host",
-            description: "Sign up to become a compute provider in our decentralized network",
-            command: "Join our hosting network",
-            isButton: true
-        },
-        {
-            icon: Download,
-            title: "Install Host CLI",
-            description: "Download and install the solnet host CLI on your machine",
-            command: "curl -sSL https://assets.krishdev.xyz/DeCloud/verification_script.sh | bash",
-            isButton: false
-        },
-        {
-            icon: Shield,
-            title: "Verification",
-            description: "Our system will verify your machine's resources and capabilities",
-            command: "Run the verification command provided after installation",
-            isButton: false
-        }
-    ];
-
-    if (!wallet || !localStorage.getItem("token")) {
-        return (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-              <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center"
-              >
-                  <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-                  <p className="text-muted-foreground mb-6">Please connect your wallet and ensure you are signed in to proceed.</p>
-                  <Link to="/signin">
-                      <Button className="cursor-pointer">SignIn</Button>
-                  </Link>
-              </motion.div>
-          </div>
-        );
-    }
-
+  if (!wallet.publicKey || !localStorage.getItem("token")) {
     return (
-        <div className="dark:bg-gradient-to-br from-background via-background to-muted/30 w-full h-full mt-20">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
-                {/* Header */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-center mb-16"
-                >
-                    <div className="inline-flex items-center space-x-2 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 rounded-full px-4 py-2 text-sm font-medium mb-6">
-                        <Server className="h-4 w-4" />
-                        <span>DePIN Hosting Network</span>
-                    </div>
-                    
-                    <h1 className="text-4xl sm:text-5xl font-bold mb-4">
-                        Become a <span className="gradient-text">Compute Provider</span>
-                    </h1>
-                    <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                        Join our decentralized physical infrastructure network and earn SOL by providing 
-                        computing resources to developers and businesses worldwide.
-                    </p>
-                </motion.div>
-
-                {/* Getting Started Steps */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4 }}
-                    className="my-16"
-                >
-                    <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold mb-4">How to Get Started</h2>
-                        <p className="text-lg text-muted-foreground">
-                            Join our hosting network in three simple steps
-                        </p>
-                    </div>
-
-                    <div className="space-y-8">
-                        {steps.map((step, index) => (
-                            <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: 0.5 + index * 0.1 }}
-                            className="relative"
-                            >
-                                <Card className="border-border/50 bg-card/30">
-                                    <CardContent className="p-4">
-                                        <div className="flex items-start space-x-3">
-                                            <div className="flex-shrink-0">
-                                                <div className="w-16 h-16 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl flex items-center justify-center border border-emerald-500/20">
-                                                    <step.icon className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="flex-1">
-                                                <div className="flex items-center space-x-3 mb-3">
-                                                    <Badge variant="outline" className="text-xs">
-                                                        Step {index + 1}
-                                                    </Badge>
-                                                    <h3 className="text-xl font-semibold">{step.title}</h3>
-                                                </div>
-                                            
-                                                <p className="text-muted-foreground mb-4 leading-relaxed">
-                                                    {step.description}
-                                                </p>
-                                            
-                                            </div>
-                                            {step.isButton && (
-                                                <Link to="/depin/register">
-                                                    <motion.button
-                                                        whileHover={{ scale: 1.05 }}
-                                                        whileTap={{ scale: 0.95 }}
-                                                        className="mt-2 px-6 py-2 bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:ring-offset-2 cursor-pointer"
-                                                    >
-                                                        {step.command}
-                                                    </motion.button>
-                                                </Link>
-                                            )}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            
-                                {/* Connecting line */}
-                                {index < steps.length - 1 && (
-                                    <div className="absolute left-8 top-full h-8 w-px bg-gradient-to-b from-emerald-500/30 to-transparent" />
-                                )}
-                            </motion.div>
-                        ))}
-                    </div>
-                </motion.section>
-            </div>
-        </div>
+      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
+            Connect your wallet to continue
+          </p>
+          <Link
+            to="/signin"
+            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
+          >
+            Sign in →
+          </Link>
+        </motion.div>
+      </div>
     );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          background:
+            "radial-gradient(ellipse 50% 40% at 50% 15%, rgba(16,185,129,0.07), transparent 70%)",
+        }}
+      />
+
+      <div className="max-w-5xl mx-auto">
+        {/* header */}
+        <div className="mb-24">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center gap-2 mb-10"
+          >
+            <span className="h-px w-6 bg-emerald-500/60" />
+            <span className="text-[11px] tracking-[0.22em] uppercase text-zinc-500 dark:text-white/40">
+              DePIN Hosting
+            </span>
+          </motion.div>
+
+          <h1 className="text-[clamp(3rem,8vw,7rem)] font-light leading-[0.95] tracking-[-0.04em] text-zinc-950 dark:text-white">
+            <span className="block overflow-hidden">
+              <motion.span
+                className="block"
+                initial={{ y: "110%" }}
+                animate={{ y: "0%" }}
+                transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1] }}
+              >
+                Your hardware.
+              </motion.span>
+            </span>
+            <span className="block overflow-hidden">
+              <motion.span
+                className="block text-zinc-400 dark:text-zinc-600"
+                initial={{ y: "110%" }}
+                animate={{ y: "0%" }}
+                transition={{
+                  duration: 0.85,
+                  delay: 0.12,
+                  ease: [0.22, 1, 0.36, 1],
+                }}
+              >
+                Your SOL.
+              </motion.span>
+            </span>
+          </h1>
+
+          <motion.p
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.45, duration: 0.6 }}
+            className="mt-8 text-zinc-500 dark:text-zinc-400 text-lg font-light max-w-md"
+          >
+            Register idle compute on the Axion DePIN network. Earn SOL per
+            second of workload served — no intermediaries.
+          </motion.p>
+        </div>
+
+        {/* steps */}
+        <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
+          {STEPS.map((step, i) => (
+            <motion.div
+              key={step.n}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.15, duration: 0.6 }}
+              className="grid md:grid-cols-12 gap-6 py-12 border-b border-black/[0.05] dark:border-white/[0.05] last:border-0"
+            >
+              <div className="md:col-span-1">
+                <span className="text-xs font-mono text-zinc-400 dark:text-zinc-600">
+                  {step.n}
+                </span>
+              </div>
+              <div className="md:col-span-7">
+                <h2 className="text-2xl font-light text-zinc-950 dark:text-white tracking-tight mb-3">
+                  {step.title}
+                </h2>
+                <p className="text-sm text-zinc-500 dark:text-zinc-500 font-light leading-relaxed mb-4">
+                  {step.desc}
+                </p>
+                {step.code && (
+                  <div className="font-mono text-xs bg-zinc-950 dark:bg-black/60 text-emerald-400 rounded-lg px-4 py-3 mt-4 flex items-center gap-3 overflow-x-auto">
+                    <span className="text-zinc-600 shrink-0">$</span>
+                    <span className="whitespace-nowrap">{step.code}</span>
+                  </div>
+                )}
+              </div>
+              <div className="md:col-span-4 flex md:justify-end items-start pt-1">
+                {step.cta && (
+                  <Link
+                    to={step.href!}
+                    className="inline-flex items-center gap-1.5 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-950 dark:hover:text-white transition-colors group"
+                  >
+                    {step.cta}
+                    <span className="group-hover:translate-x-0.5 transition-transform inline-block">
+                      →
+                    </span>
+                  </Link>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
 }

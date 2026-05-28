@@ -1,10 +1,10 @@
 export const regions = [
-  { value: "asia-south2-c", label: "Asia (Delhi)", latency: "10ms" },
-  { value: "asia-south2-b", label: "Asia (Mumbai)", latency: "14ms" },
-  { value: "us-central1-a", label: "US Central (Iowa)", latency: "120ms" },
-  { value: "us-east-b", label: "US East (Oregon)", latency: "80ms" },
-  { value: "europe-west1-b", label: "Europe West (Belgium)", latency: "45ms" },
-  { value: "us-west1-a", label: "US West", latency: "120ms" },
+  { value: "asia-south2-c", label: "Asia (Delhi)", latency: "50ms" },
+  { value: "asia-south2-b", label: "Asia (Mumbai)", latency: "45ms" },
+  { value: "us-central1-a", label: "US Central (Iowa)", latency: "20ms" },
+  { value: "us-east-b", label: "US East (Oregon)", latency: "15ms" },
+  { value: "europe-west1-b", label: "Europe West (Belgium)", latency: "35ms" },
+  { value: "us-west1-a", label: "US West", latency: "25ms" },
 ];
 
 export const operatingSystems = [
@@ -12,31 +12,31 @@ export const operatingSystems = [
     value: "ubuntu-2204-lts",
     label: "Ubuntu 22.04 LTS",
     icon: "🐧",
-    description: "Most popular choice",
+    description: "Latest stable release",
   },
   {
     value: "ubuntu-2004-lts",
     label: "Ubuntu 20.04 LTS",
     icon: "🐧",
-    description: "Long-term support",
+    description: "Proven LTS release",
   },
   {
     value: "debian-11",
     label: "Debian 11",
     icon: "🌀",
-    description: "Previous stable release",
+    description: "Stable and secure",
   },
   {
     value: "centos-7",
     label: "CentOS 7",
-    icon: "🐧",
+    icon: "🔴",
     description: "Enterprise-grade",
   },
   {
     value: "ubuntu-1804-lts",
     label: "Ubuntu 18.04 LTS",
     icon: "🐧",
-    description: "Older LTS version",
+    description: "Legacy LTS release",
   },
   {
     value: "debian-10",

@@ -133,38 +133,7 @@ spec:
         - name: env-file
           secret:
             secretName: decloud-ws-relayer-env
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: decloud-depin-worker
-  namespace: decloud
-  labels:
-    app: decloud-depin-worker
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: decloud-depin-worker
-  template:
-    metadata:
-      labels:
-        app: decloud-depin-worker
-    spec:
-      containers:
-        - name: decloud-depin-worker
-          image: krishanand01/decloud-depin-worker:v2.1
-          ports:
-            - containerPort: 9000
-          volumeMounts:
-            - name: env-file
-              mountPath: /app/apps/depin-worker/.env
-              subPath: env
-      volumes:
-        - name: env-file
-          secret:
-            secretName: decloud-depin-worker-env
----
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:

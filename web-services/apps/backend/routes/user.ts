@@ -19,13 +19,21 @@ UserRouter.post("/signup", async (req, res) => {
   try {
     const { email, publicKey, name } = parsedBody.data;
 
-    const user = await prisma.user.create({
-      data: {
-        email,
+    const existingUser = await prisma.user.findUnique({
+      where: {
         publicKey,
-        name,
       },
     });
+
+    const user =
+      existingUser ??
+      (await prisma.user.create({
+        data: {
+          email,
+          publicKey,
+          name,
+        },
+      }));
 
     res.status(200).json({
       message: "User signed up successfully",
@@ -38,6 +46,34 @@ UserRouter.post("/signup", async (req, res) => {
       ),
     });
   } catch (error) {
+    if (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "P2002"
+    ) {
+      const { publicKey } = parsedBody.data;
+      const user = await prisma.user.findUnique({
+        where: {
+          publicKey,
+        },
+      });
+
+      if (user) {
+        res.status(200).json({
+          message: "User signed up successfully",
+          token: jwt.sign(
+            { userId: user.id },
+            process.env.JWT_SECRET || "secret123",
+            {
+              expiresIn: "1Day",
+            },
+          ),
+        });
+        return;
+      }
+    }
+
     console.error("Error during signup:", error);
     res.status(500).json({
       error: "Internal server error",

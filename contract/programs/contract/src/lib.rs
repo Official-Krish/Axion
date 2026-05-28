@@ -9,7 +9,7 @@ pub mod depin;
 use instructions::*;
 use depin::*;
 
-declare_id!("423HDGsdSEMLnuPXsggRY2d3YHLGw9ijtAczh3pkCkAs");
+declare_id!("J7nyNjMR7p9Xi8ohzkNAFmnAeVUBb1AMpGKTFGtFvVjJ");
 
 #[program]
 pub mod contract {
