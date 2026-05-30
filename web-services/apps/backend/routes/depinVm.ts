@@ -11,6 +11,7 @@ import {
 } from "@axion/types";
 import {
   activateHostQueue,
+  claimRewardsQueue,
   initialiseAccount,
   terminateDepinVMQueue,
 } from "../redis";
@@ -232,7 +233,7 @@ depinVM.post("/depinVerification", async (req, res) => {
   }
 
   try {
-    const { os, cpu_cores, ram_gb, disk_gb, ip_address, wallet, Key } =
+    const { os, cpu_cores, ram_gb, disk_gb, ip_address, wallet, key } =
       parseData.data;
     const user = await prisma.user.findFirst({ where: { publicKey: wallet } });
     if (!user) {
@@ -248,7 +249,7 @@ depinVM.post("/depinVerification", async (req, res) => {
       return;
     }
 
-    const isKeyValid = await bcrypt.compare(Key, vm.Key);
+    const isKeyValid = await bcrypt.compare(key, vm.Key);
     if (!isKeyValid) {
       fail(res, 400, "Invalid Key");
       return;
@@ -256,16 +257,20 @@ depinVM.post("/depinVerification", async (req, res) => {
 
     if (
       vm.os !== os ||
-      vm.cpu !== cpu_cores ||
-      vm.ram !== ram_gb ||
-      vm.diskSize !== disk_gb
+      vm.cpu !== Number(cpu_cores) ||
+      vm.ram !== Number(ram_gb) ||
+      vm.diskSize !== Number(disk_gb)
     ) {
       await prisma.depinHostMachine.delete({ where: { id: vm.id } });
       fail(res, 400, "VM details do not match");
       return;
     }
 
-    const pricePerHour = calculatePricePerHour(cpu_cores, ram_gb, disk_gb);
+    const pricePerHour = calculatePricePerHour(
+      Number(cpu_cores),
+      Number(ram_gb),
+      Number(disk_gb),
+    );
     await prisma.depinHostMachine.update({
       where: { id: vm.id },
       data: { verified: true, perHourPrice: pricePerHour },
@@ -407,7 +412,7 @@ depinVM.post("/claimSOL", authMiddleware, async (req, res) => {
   }
 
   try {
-    const { id, pubKey, amount } = parseData.data;
+    const { id, pubKey } = parseData.data;
     const vm = await prisma.depinHostMachine.findFirst({
       where: { id, userPublicKey: pubKey },
     });
@@ -420,11 +425,11 @@ depinVM.post("/claimSOL", authMiddleware, async (req, res) => {
       return;
     }
 
-    await prisma.depinHostMachine.update({
-      where: { id, userPublicKey: pubKey },
-      data: { claimedSOL: { increment: amount } },
+    await claimRewardsQueue.add("claim-rewards", {
+      id: vm.id,
+      userPubKey: pubKey,
     });
-    ok(res, { message: "SOL claimed successfully" });
+    ok(res, { message: "Claim request submitted" });
   } catch (error) {
     console.error("Error claiming SOL:", error);
     fail(res, 500, "Internal server error");
