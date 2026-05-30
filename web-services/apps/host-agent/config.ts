@@ -16,6 +16,8 @@ export interface AgentConfig {
   ram: number;
   disk: number;
   registered_at: string;
+  tunnelId?: string;
+  tunnelToken?: string;
 }
 
 export function loadConfig(): AgentConfig {
