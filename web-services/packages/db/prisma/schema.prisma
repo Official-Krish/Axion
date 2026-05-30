@@ -109,6 +109,8 @@ model DepinHostMachine {
   pdaAddress    String?
   perHourPrice  Float       @default(0)
   claimedSOL    Float?      @default(0)
+  tunnelId      String?
+  tunnelCredentials String?
   lastHeartbeat DateTime?
   totalEarned   Float       @default(0)
   platformFeeEarned Float   @default(0)
