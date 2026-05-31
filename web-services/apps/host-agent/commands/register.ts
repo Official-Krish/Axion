@@ -1,6 +1,8 @@
 import { createInterface } from "readline";
 import { collectSpecs } from "../specs";
 import { saveConfig, CONFIG_FILE, API_ENDPOINT } from "../config";
+import { checkCloudflared, saveTunnelToken } from "../utils/tunnel";
+import { writeState } from "../utils/state";
 
 const rl = createInterface({ input: process.stdin, output: process.stdout });
 const ask = (q: string): Promise<string> =>
@@ -22,6 +24,11 @@ export async function register() {
 
   if (!wallet || !key) {
     console.error("\n  Error: Wallet and key are required.");
+    process.exit(1);
+  }
+
+  if (!checkCloudflared()) {
+    console.error("\n  Error: cloudflared not found. Install it first.");
     process.exit(1);
   }
 
@@ -52,7 +59,12 @@ export async function register() {
       process.exit(1);
     }
 
-    const data = (await res.json()) as { host_id: string; token: string };
+    const data = (await res.json()) as {
+      host_id: string;
+      token: string;
+      tunnelId: string | null;
+      tunnelToken: string | null;
+    };
 
     saveConfig({
       host_id: data.host_id,
@@ -64,9 +76,40 @@ export async function register() {
       registered_at: new Date().toISOString(),
     });
 
+    // Save tunnel token for cloudflared (tunnel will start on `axion start`)
+    if (data.tunnelToken) {
+      saveTunnelToken(data.tunnelToken);
+      writeState({
+        hostId: data.host_id,
+        tunnelId: data.tunnelId || "",
+        jobs: {},
+      });
+    }
+
     console.log(`\n  ✓ Registered successfully!`);
     console.log(`  Host ID: ${data.host_id}`);
     console.log(`  Config:  ${CONFIG_FILE}\n`);
+
+    console.log(
+      "  Tunnel token saved. Run 'axion start' to start the tunnel and listen for jobs.\n",
+    );
+
+    console.log(`\n  ✓ Registered successfully!`);
+    console.log(`  Host ID: ${data.host_id}`);
+    console.log(`  Config:  ${CONFIG_FILE}\n`);
+
+    // Start cloudflared tunnel
+    if (data.tunnelId) {
+      console.log("  Starting Cloudflare tunnel...");
+      startTunnel();
+      console.log("  ✓ Tunnel active\n");
+    } else {
+      console.log(
+        "  ⚠ No tunnel credentials. Run 'axion register' after backend setup.\n",
+      );
+    }
+
+    console.log("  Run 'axion start' to begin listening for jobs.\n");
   } catch (err: any) {
     console.error(`\n  Error: ${err.message}`);
     process.exit(1);

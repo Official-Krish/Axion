@@ -64,8 +64,10 @@ interface WsMessage {
   token?: string;
   dockerImage?: string;
   ports?: number[];
-  env?: Record<string, string>;
+  env?: Record<string, string> | string[];
   status?: string;
+  subdomain?: string;
+  containerPort?: number;
 }
 
 // --- WebSocket Server ---
@@ -216,7 +218,8 @@ function handleStartJob(ws: ServerWebSocket<unknown>, data: WsMessage) {
       type: "start-job",
       jobId: data.jobId,
       dockerImage: data.dockerImage,
-      ports: data.ports,
+      containerPort: data.containerPort,
+      subdomain: data.subdomain,
       env: data.env,
     }),
   );
