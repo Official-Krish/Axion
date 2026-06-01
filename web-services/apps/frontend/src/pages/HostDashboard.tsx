@@ -1,8 +1,7 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { type Machine } from "../../types/depinMachines";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate, Link } from "react-router-dom";
 import { DashboardTable } from "@/components/DepinHostDashboard/Table";
@@ -44,18 +43,17 @@ export function HostDashboard() {
   });
 
   useEffect(() => {
-    if (!wallet.publicKey) return;
-    axios
-      .get(
-        `${BACKEND_URL}/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`,
-        {
-          headers: { Authorization: `${localStorage.getItem("token")}` },
-        },
-      )
-      .then((r) => {
+    const pubKey = wallet.publicKey?.toBase58();
+    if (!pubKey) return;
+    const fetchMachines = async () => {
+      try {
+        const r = await api.get(`/user/depin/getAll?userPublicKey=${pubKey}`);
         if (r.status === 200) setMachines(r.data);
-      })
-      .catch(console.error);
+      } catch {
+        /* toast handled by api interceptor */
+      }
+    };
+    fetchMachines();
   }, [wallet]);
 
   if (!wallet.publicKey || !localStorage.getItem("token")) {

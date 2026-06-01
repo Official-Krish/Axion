@@ -2,8 +2,7 @@ import { motion } from "motion/react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { toast } from "sonner";
 import { type VM } from "../../types/vm";
@@ -42,10 +41,7 @@ export function DepinDeployment() {
     if (!id) return;
     const fetch = async () => {
       try {
-        const res = await axios.get(
-          `${BACKEND_URL}/vmInstance/getDetails?id=${id}`,
-          { headers: { Authorization: `${localStorage.getItem("token")}` } },
-        );
+        const res = await api.get(`/vmInstance/getDetails?id=${id}`);
         setVm(res.data.vmInstance);
       } catch {
         toast.error("Failed to load deployment details", {

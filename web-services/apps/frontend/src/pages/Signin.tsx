@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Mail, ArrowRight, WalletIcon } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useNavigate } from "react-router-dom";
 import { AxionLogo } from "@/components/AxionLogo";
@@ -36,7 +35,7 @@ export function SignIn() {
       return;
     }
     try {
-      const res = await axios.post(`${BACKEND_URL}/user/login`, {
+      const res = await api.post("/user/login", {
         ...formData,
         publicKey: wallet.adapter.publicKey?.toString(),
       });
@@ -50,8 +49,8 @@ export function SignIn() {
         toast.error("Failed to sign in. Please try again.");
         console.error("Failed to sign in:", res.data);
       }
-    } catch (error) {
-      console.error("Error signing in:", error);
+    } catch {
+      /* toast handled by api interceptor */
     }
     setIsLoading(false);
   };

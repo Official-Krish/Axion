@@ -18,8 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import type { Machine } from "types/depinMachines";
 import { motion } from "motion/react";
 
@@ -54,20 +53,12 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/findVM`,
-        {
-          cpu: formData.cpu,
-          ram: formData.ram,
-          diskSize: formData.diskSize,
-          dockerImage: formData.dockerImage,
-        },
-        {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        },
-      );
+      const res = await api.post("/user/depin/findVM", {
+        cpu: formData.cpu,
+        ram: formData.ram,
+        diskSize: formData.diskSize,
+        dockerImage: formData.dockerImage,
+      });
       if (res.status === 200) {
         toast.success("VM found successfully!");
         setVm(res.data.vm);
@@ -75,8 +66,7 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
       } else {
         toast.error("Failed to find VM. Please try again.");
       }
-    } catch (error) {
-      console.error("Error submitting form:", error);
+    } catch {
       toast.error("Failed to find vm. Please try again.");
     }
   };

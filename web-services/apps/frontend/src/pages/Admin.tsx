@@ -46,8 +46,8 @@ import {
   isVaultInitialized,
 } from "@/lib/contract";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { ADMIN_KEY, BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
+import { ADMIN_KEY } from "@/config";
 import { formatter } from "@/lib/FormatTime";
 import { useIndexerEvents, type IndexerEvent } from "@/lib/useIndexerEvents";
 import { clusterApiUrl, Connection } from "@solana/web3.js";
@@ -178,10 +178,8 @@ export function AdminPage() {
 
   useEffect(() => {
     if (activeTab !== "vms") return;
-    axios
-      .get(`${BACKEND_URL}/vm/getAll?adminKey=${wallet?.publicKey}`, {
-        headers: { Authorization: `${localStorage.getItem("token")}` },
-      })
+    api
+      .get(`/vm/getAll?adminKey=${wallet?.publicKey}`)
       .then((res) => {
         if (res.status === 200) setVMs(res.data || []);
       })

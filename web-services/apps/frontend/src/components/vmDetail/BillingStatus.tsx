@@ -19,8 +19,7 @@ import { toast } from "sonner";
 import { calculateEscrowEndTime, calculatePrice } from "@/lib/vm";
 import { TopUpEscrowSession } from "@/lib/Escrow";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useTxConfirm } from "@/lib/useTxConfirm";
 
 type TxStatus = "idle" | "submitted" | "confirmed" | "failed";
@@ -57,21 +56,12 @@ export const BillingStatus = ({ vm }: { vm: VM }) => {
         onConfirmed: async () => {
           setTxStatus("confirmed");
           try {
-            const res = await axios.post(
-              `${BACKEND_URL}/vm/topup`,
-              {
-                id: vm.id,
-                instanceId: vm.instanceId,
-                amount: topUpAmount,
-                additionalEscrowDuration,
-              },
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                  Authorization: `${localStorage.getItem("token")}`,
-                },
-              },
-            );
+            const res = await api.post("/vm/topup", {
+              id: vm.id,
+              instanceId: vm.instanceId,
+              amount: topUpAmount,
+              additionalEscrowDuration,
+            });
             if (res.status === 200) {
               toast.success("Escrow balance topped up successfully", {
                 position: "top-right",

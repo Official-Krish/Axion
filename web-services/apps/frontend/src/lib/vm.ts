@@ -1,5 +1,4 @@
-import axios from "axios";
-import { runtimeEnv } from "../runtimeEnv";
+import { api } from "./api";
 
 export const calculatePrice = async (
   machineType: string,
@@ -7,24 +6,14 @@ export const calculatePrice = async (
   duration: number,
 ): Promise<number> => {
   try {
-    const response = await axios.get(
-      `${runtimeEnv.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL || "http://localhost:3000/api/v2"}/vm/calculatePrice`,
-      {
-        params: {
-          machineType,
-          diskSize,
-        },
-        headers: {
-          Authorization: `${localStorage.getItem("token")}`,
-        },
-      },
-    );
-    const price = response.data.price; // for 30 days
-    const perDayPrice = price / 30; // Convert to per day price
-    const Inhours = perDayPrice / (24 * 60); // Convert to mins
+    const response = await api.get("/vm/calculatePrice", {
+      params: { machineType, diskSize },
+    });
+    const price = response.data.price;
+    const perDayPrice = price / 30;
+    const Inhours = perDayPrice / (24 * 60);
     return Inhours * duration;
-  } catch (error) {
-    console.error("Error calculating price:", error);
+  } catch {
     return 0;
   }
 };

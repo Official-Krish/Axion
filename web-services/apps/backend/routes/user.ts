@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { SignInSchema, SignUpSchema } from "@axion/types";
 import prisma from "@axion/db";
-import { authMiddleware } from "@axion/utilities/auth";
+import { authMiddleware, logger } from "@axion/utilities";
 import {
   fail,
   getUserOr404,
@@ -41,8 +41,8 @@ UserRouter.post("/signup", async (req, res) => {
         return;
       }
     }
-    console.error("Error during signup:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during signup", error);
+    fail(res, 500, "Internal server error", "SIGNUP_FAILED");
   }
 });
 
@@ -64,8 +64,8 @@ UserRouter.post("/login", async (req, res) => {
       token: signToken({ userId: user.id }, "1Day"),
     });
   } catch (error) {
-    console.error("Error during login:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during login", error);
+    fail(res, 500, "Internal server error", "LOGIN_FAILED");
   }
 });
 

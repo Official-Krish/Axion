@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware } from "@axion/utilities/auth";
+import { authMiddleware, logger } from "@axion/utilities";
 import prisma from "@axion/db";
 import {
   ChangeVMStatusSchema,
@@ -250,8 +250,8 @@ depinVM.post("/deploy", authMiddleware, async (req, res) => {
       name: txn.name,
     });
   } catch (error) {
-    console.error("Error deploying image:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error deploying image", error);
+    fail(res, 500, "Internal server error", "DEPLOY_FAILED");
   }
 });
 
@@ -306,8 +306,8 @@ depinVM.delete("/terminate/:id", authMiddleware, async (req, res) => {
 
     ok(res, { message: "Termination request sent successfully" });
   } catch (error) {
-    console.error("Error terminating VM:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error terminating VM", error);
+    fail(res, 500, "Internal server error", "TERMINATE_FAILED");
   }
 });
 
@@ -404,8 +404,8 @@ depinVM.post("/depinVerification", async (req, res) => {
       tunnelId: vm.tunnelId,
     });
   } catch (error) {
-    console.error("Error in depin verification:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error in depin verification", error);
+    fail(res, 500, "Internal server error", "VERIFICATION_FAILED");
   }
 });
 
@@ -461,8 +461,8 @@ depinVM.post("/register", authMiddleware, async (req, res) => {
 
     ok(res, { message: "VM registered successfully", vm });
   } catch (error) {
-    console.error("Error registering VM:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error registering VM", error);
+    fail(res, 500, "Internal server error", "REGISTER_FAILED");
   }
 });
 
@@ -506,8 +506,8 @@ depinVM.post("/changeVisibility", authMiddleware, async (req, res) => {
 
     ok(res, { message: "VM visibility updated successfully" });
   } catch (error) {
-    console.error("Error fetching VM:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VM", error);
+    fail(res, 500, "Internal server error", "VM_FETCH_FAILED");
   }
 });
 
@@ -524,8 +524,8 @@ depinVM.get("/getAll", authMiddleware, async (req, res) => {
     });
     ok(res, vms);
   } catch (error) {
-    console.error("Error fetching VMs:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VMs", error);
+    fail(res, 500, "Internal server error", "VMS_FETCH_FAILED");
   }
 });
 
@@ -544,8 +544,8 @@ depinVM.get("/getById", authMiddleware, async (req, res) => {
     }
     ok(res, vm);
   } catch (error) {
-    console.error("Error fetching VM:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VM by ID", error);
+    fail(res, 500, "Internal server error", "VM_BY_ID_FAILED");
   }
 });
 
@@ -576,8 +576,8 @@ depinVM.post("/claimSOL", authMiddleware, async (req, res) => {
     });
     ok(res, { message: "Claim request submitted" });
   } catch (error) {
-    console.error("Error claiming SOL:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error claiming SOL", error);
+    fail(res, 500, "Internal server error", "CLAIM_SOL_FAILED");
   }
 });
 
@@ -594,8 +594,8 @@ depinVM.get("/settlement/:id", authMiddleware, async (req, res) => {
     });
     ok(res, { settlement });
   } catch (error) {
-    console.error("Error fetching settlement:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching settlement", error);
+    fail(res, 500, "Internal server error", "SETTLEMENT_FETCH_FAILED");
   }
 });
 

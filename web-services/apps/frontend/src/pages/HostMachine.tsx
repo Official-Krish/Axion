@@ -4,8 +4,7 @@ import { toast } from "sonner";
 import { Step1, type Step1FormData } from "@/components/DepinHosting/Step1";
 import { Step2 } from "@/components/DepinHosting/Step2";
 import { Step3 } from "@/components/DepinHosting/Step3";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { IconCheck, IconCoins, IconTrendingUp } from "@tabler/icons-react";
@@ -227,11 +226,10 @@ export function HostRegister() {
   const handleStep1Submit = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/register`,
-        { ...formData, userPublicKey: wallet.publicKey?.toBase58() },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/register", {
+        ...formData,
+        userPublicKey: wallet.publicKey?.toBase58(),
+      });
       if (res.status === 200) {
         setId(res.data.vm.id);
         toast.success("Machine details saved. Proceed to verification.");
@@ -251,12 +249,7 @@ export function HostRegister() {
         setIsLoading(false);
         return;
       }
-      const res = await axios.get(
-        `${BACKEND_URL}/user/depin/getById?id=${id}`,
-        {
-          headers: { Authorization: `${localStorage.getItem("token")}` },
-        },
-      );
+      const res = await api.get(`/user/depin/getById?id=${id}`);
       if (res.data.verified) {
         toast.success("Machine verified!");
         setCurrentStep(3);

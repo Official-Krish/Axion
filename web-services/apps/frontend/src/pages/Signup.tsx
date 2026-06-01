@@ -14,8 +14,7 @@ import { Mail, User, ArrowRight, WalletIcon } from "lucide-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useWallet } from "@solana/wallet-adapter-react";
 import "@solana/wallet-adapter-react-ui/styles.css";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AxionLogo } from "@/components/AxionLogo";
@@ -39,7 +38,7 @@ export function SignUp() {
       return;
     }
     try {
-      const res = await axios.post(`${BACKEND_URL}/user/signup`, {
+      const res = await api.post("/user/signup", {
         ...formData,
         publicKey: wallet.publicKey?.toString(),
       });
@@ -56,8 +55,8 @@ export function SignUp() {
           position: "bottom-right",
         });
       }
-    } catch (error) {
-      console.error("Error creating account:", error);
+    } catch {
+      /* toast handled by api interceptor */
     }
     setIsLoading(false);
   };

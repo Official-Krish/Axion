@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import prisma from "@axion/db";
+import { logger } from "@axion/utilities";
 
 const router = Router();
 
@@ -32,14 +33,24 @@ interface IndexerEvent {
 router.post("/webhook", async (req: Request, res: Response) => {
   const token = req.headers["x-indexer-token"];
   if (token !== INDEXER_TOKEN) {
-    res.status(401).json({ error: "Unauthorized" });
+    res
+      .status(401)
+      .json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Unauthorized" },
+      });
     return;
   }
 
   const event: IndexerEvent = req.body;
 
   if (!event.instruction || !event.signature) {
-    res.status(400).json({ error: "Invalid event payload" });
+    res
+      .status(400)
+      .json({
+        success: false,
+        error: { code: "INVALID_PAYLOAD", message: "Invalid event payload" },
+      });
     return;
   }
 
@@ -61,8 +72,13 @@ router.post("/webhook", async (req: Request, res: Response) => {
     await handleInstruction(event);
     res.status(200).json({ received: true });
   } catch (error) {
-    console.error(`[Indexer] Error handling ${event.instruction}:`, error);
-    res.status(500).json({ error: "Failed to process event" });
+    logger.error(`[Indexer] Error handling ${event.instruction}`, error);
+    res
+      .status(500)
+      .json({
+        success: false,
+        error: { code: "INDEXER_ERROR", message: "Failed to process event" },
+      });
   }
 });
 

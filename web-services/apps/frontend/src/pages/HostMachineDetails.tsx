@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useParams, Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { type Machine } from "../../types/depinMachines";
 
 function StatRow({
@@ -37,15 +36,10 @@ export function HostMachineDetails() {
 
   useEffect(() => {
     if (!wallet.publicKey) return;
-    axios
-      .get(
-        `${BACKEND_URL}/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`,
-        {
-          headers: { Authorization: `${localStorage.getItem("token")}` },
-        },
-      )
+    api
+      .get(`/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`)
       .then((r) => setMachine(r.data.find((m: Machine) => m.id === id) ?? null))
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [wallet.publicKey, id]);
 

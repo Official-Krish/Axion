@@ -2,8 +2,7 @@ import { motion } from "motion/react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Trash2 } from "lucide-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import type { VM } from "types/vm";
 import { calculatePrice } from "@/lib/vm";
 import { EndRentalSession, transferFromVault } from "@/lib/contract";
@@ -64,9 +63,8 @@ export const Header = ({ vm }: { vm: VM }) => {
       onConfirmed: async () => {
         setTxStatus("confirmed");
         try {
-          const res = await axios.delete(
-            `${BACKEND_URL}/vmInstance/destroy?vmId=${vm.id}&instanceId=${vm?.instanceId}&zone=${vm?.region}`,
-            { headers: { Authorization: `${localStorage.getItem("token")}` } },
+          const res = await api.delete(
+            `/vmInstance/destroy?vmId=${vm.id}&instanceId=${vm?.instanceId}&zone=${vm?.region}`,
           );
           if (res.status === 200) {
             if (res.data.remainingTime > 0) {

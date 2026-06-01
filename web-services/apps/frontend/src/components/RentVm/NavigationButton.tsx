@@ -10,8 +10,7 @@ import {
 } from "../ui/dialog";
 import { motion } from "motion/react";
 import { toast } from "sonner";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 
 interface NavigationButtonProps {
   currentStep: number;
@@ -93,14 +92,7 @@ export const NavigationButton = ({
               <Button
                 className="w-full cursor-pointer"
                 onClick={async () => {
-                  const res = await axios.get(
-                    `${BACKEND_URL}/user/checkTimeout`,
-                    {
-                      headers: {
-                        Authorization: `${localStorage.getItem("token")}`,
-                      },
-                    },
-                  );
+                  const res = await api.get("/user/checkTimeout");
                   if (res.data.error) {
                     toast.error(
                       "You can only create a VM once every 12 hours",

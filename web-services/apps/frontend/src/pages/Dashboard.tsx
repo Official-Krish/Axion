@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Plus, Search, ExternalLink } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { type VM } from "../../types/vm";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { formatter } from "@/lib/FormatTime";
@@ -64,14 +63,10 @@ export function Dashboard() {
     }
     const getVMs = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/vmInstance/getAll`, {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await api.get("/vmInstance/getAll");
         setVMs(res.data.vms);
-      } catch (error) {
-        console.error("Error fetching VMs:", error);
+      } catch {
+        /* toast handled by api interceptor */
       }
     };
     getVMs();

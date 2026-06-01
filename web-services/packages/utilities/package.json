@@ -21,6 +21,9 @@
   "exports": {
     ".": "./index.ts",
     "./auth": "./authMiddleware.ts",
-    "./redis": "./redis.ts"
+    "./redis": "./redis.ts",
+    "./errors": "./errors.ts",
+    "./response": "./response.ts",
+    "./logger": "./logger.ts"
   }
 }

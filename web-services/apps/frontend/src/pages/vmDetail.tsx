@@ -3,8 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { type VM } from "../../types/vm";
 import { useEffect, useState } from "react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { Header } from "@/components/vmDetail/Header";
 import { Sidebar } from "@/components/vmDetail/Sidebar";
@@ -47,17 +46,10 @@ export function VMDetails() {
   useEffect(() => {
     const fetchVMDetails = async () => {
       try {
-        const response = await axios.get(
-          `${BACKEND_URL}/vmInstance/getDetails?id=${id}`,
-          {
-            headers: {
-              Authorization: `${localStorage.getItem("token")}`,
-            },
-          },
-        );
+        const response = await api.get(`/vmInstance/getDetails?id=${id}`);
         setVm(response.data.vmInstance);
-      } catch (error) {
-        console.error("Error fetching VM details:", error);
+      } catch {
+        /* toast handled by api interceptor */
       }
     };
 

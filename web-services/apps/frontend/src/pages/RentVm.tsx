@@ -2,8 +2,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
 import type { FinalConfig, VMTypes } from "types/vm";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { calculateEscrowEndTime, calculatePrice } from "@/lib/vm";
 import { Step1 } from "@/components/RentVm/Step1";
 import { Step3 } from "@/components/RentVm/Step3";
@@ -73,14 +72,10 @@ export const RentVM = () => {
   useEffect(() => {
     const fetchVMConfigs = async () => {
       try {
-        const res = await axios.get(`${BACKEND_URL}/vm/getVMTypes`, {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        });
+        const res = await api.get("/vm/getVMTypes");
         setVms(res.data);
-      } catch (error) {
-        console.error("Error fetching VM configurations:", error);
+      } catch {
+        /* toast handled by api interceptor */
       }
     };
     fetchVMConfigs();
@@ -92,18 +87,10 @@ export const RentVM = () => {
         return;
       }
       try {
-        const res = await axios.get(
-          `${BACKEND_URL}/vm/checkNameAvailability?name=${vmName}`,
-          {
-            headers: {
-              Authorization: `${localStorage.getItem("token")}`,
-            },
-          },
-        );
-
+        const res = await api.get(`/vm/checkNameAvailability?name=${vmName}`);
         setIsNameAvailable(res.data.available);
-      } catch (error) {
-        console.error("Error", error);
+      } catch {
+        /* toast handled by api interceptor */
       }
     };
     checkNameAvailability();
@@ -164,27 +151,19 @@ export const RentVM = () => {
               selectedVMConfig!.machineType,
               diskSize,
             );
-      const res = await axios.post(
-        `${BACKEND_URL}/vmInstance/create`,
-        {
-          id,
-          name: vmName.toLowerCase(),
-          paymentType: paymentType.toUpperCase(),
-          price:
-            paymentType === "duration" ? costPerMin * duration : escrowAmount,
-          region,
-          os,
-          diskSize: diskSize.toString(),
-          endTime: endTime,
-          machineType: selectedVMConfig?.machineType,
-          provider: "GCP", // Assuming GCP for now, can be dynamic based on selectedConfig
-        },
-        {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        },
-      );
+      const res = await api.post("/vmInstance/create", {
+        id,
+        name: vmName.toLowerCase(),
+        paymentType: paymentType.toUpperCase(),
+        price:
+          paymentType === "duration" ? costPerMin * duration : escrowAmount,
+        region,
+        os,
+        diskSize: diskSize.toString(),
+        endTime: endTime,
+        machineType: selectedVMConfig?.machineType,
+        provider: "GCP",
+      });
       if (res.status === 200) {
         setPaymentStatus("Success");
         toast.success("VM instance created successfully!", {
@@ -202,10 +181,9 @@ export const RentVM = () => {
         toast.error(`Failed to create VM instance.`, {
           position: "bottom-right",
         });
-        console.error("Failed to create VM instance:", res.data);
       }
-    } catch (error) {
-      console.error("Error creating VM instance:", error);
+    } catch {
+      setPaymentStatus("Failed");
     }
   };
 

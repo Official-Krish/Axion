@@ -15,8 +15,7 @@ import {
   Clock,
 } from "lucide-react";
 import { toast } from "sonner";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 
 type Stage =
   | "idle"
@@ -56,10 +55,7 @@ export const StopDialog = ({
     setStage("submitting");
     setErrorMsg("");
     try {
-      const res = await axios.delete(
-        `${BACKEND_URL}/user/depin/terminate/${vmId}`,
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.delete(`/user/depin/terminate/${vmId}`);
 
       if (res.status !== 200) {
         setStage("failed");
@@ -77,10 +73,7 @@ export const StopDialog = ({
       pollRef.current = setInterval(async () => {
         attempts++;
         try {
-          const sr = await axios.get(
-            `${BACKEND_URL}/user/depin/settlement/${vmId}`,
-            { headers: { Authorization: `${localStorage.getItem("token")}` } },
-          );
+          const sr = await api.get(`/user/depin/settlement/${vmId}`);
           if (sr.data.settlement) {
             stopPolling();
             setStage("done");

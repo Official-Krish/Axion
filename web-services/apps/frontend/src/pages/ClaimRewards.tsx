@@ -3,9 +3,8 @@ import { motion, useInView } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Link } from "react-router-dom";
 import { type Machine } from "../../types/depinMachines";
-import { BACKEND_URL } from "@/config";
 import { toast } from "sonner";
-import axios from "axios";
+import { api } from "@/lib/api";
 
 // per-machine claim status
 type ClaimStatus = "idle" | "submitted" | "confirmed" | "failed";
@@ -104,13 +103,10 @@ export default function ClaimRewards() {
 
   useEffect(() => {
     if (!wallet.publicKey) return;
-    axios
-      .get(
-        `${BACKEND_URL}/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`,
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      )
+    api
+      .get(`/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`)
       .then((r) => setMachines(r.data))
-      .catch(console.error)
+      .catch(() => {})
       .finally(() => setLoading(false));
   }, [wallet.publicKey]);
 
@@ -121,11 +117,10 @@ export default function ClaimRewards() {
     if (!wallet.publicKey) return;
     setStatus(id, "submitted");
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/claimSOL`,
-        { id, pubKey: wallet.publicKey.toBase58() },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/claimSOL", {
+        id,
+        pubKey: wallet.publicKey.toBase58(),
+      });
       if (res.status === 200) {
         setStatus(id, "confirmed");
         toast.success("Claim submitted. Rewards will arrive shortly.");

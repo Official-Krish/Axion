@@ -1,5 +1,5 @@
 import IORedis from "ioredis";
-import { Queue } from "bullmq";
+import { type QueueOptions, Queue } from "bullmq";
 
 const connection = new IORedis({
   host: process.env.REDIS_HOST || "localhost",
@@ -11,8 +11,8 @@ export function getRedisConnection(): IORedis {
   return connection;
 }
 
-export function createQueue(name: string): Queue {
-  return new Queue(name, { connection });
+export function createQueue(name: string, opts?: Partial<QueueOptions>): Queue {
+  return new Queue(name, { connection, ...opts });
 }
 
 export { connection as redisConnection };
