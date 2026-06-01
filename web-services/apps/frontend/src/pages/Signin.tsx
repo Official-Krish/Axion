@@ -145,7 +145,12 @@ export function SignIn() {
               )}
             </motion.div>
 
-            <motion.form onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              onSubmit={handleSubmit}
+              role="form"
+              aria-label="Sign in form"
+              className="space-y-4"
+            >
               <div className="space-y-4">
                 <Label htmlFor="email" className="flex items-center space-x-2">
                   <Mail className="h-4 w-4" />

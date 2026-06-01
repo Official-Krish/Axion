@@ -112,7 +112,10 @@ export default function Profile() {
   const email = formData.email ?? localStorage.getItem("email") ?? "";
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
+    <div
+      aria-live="polite"
+      className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden"
+    >
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -267,6 +270,7 @@ export default function Profile() {
         >
           <button
             onClick={() => {
+              if (!window.confirm("Are you sure you want to sign out?")) return;
               localStorage.removeItem("token");
               toast.success("Signed out");
               window.location.href = "/";

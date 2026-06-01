@@ -28,6 +28,7 @@ export const RentVM = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [vms, setVms] = useState<VMTypes[]>([]);
+  const [loading, setLoading] = useState(true);
   const [finalConfig, setFinalConfig] = useState<FinalConfig>();
   const [paymentStatus, setPaymentStatus] = useState<
     "Pending" | "Success" | "Failed" | "not_started"
@@ -86,12 +87,14 @@ export const RentVM = () => {
 
   useEffect(() => {
     const fetchVMConfigs = async () => {
+      setLoading(true);
       try {
         const res = await api.get("/vm/getVMTypes");
         setVms(res.data);
       } catch {
         /* toast handled by api interceptor */
       }
+      setLoading(false);
     };
     fetchVMConfigs();
   }, []);
@@ -251,7 +254,10 @@ export const RentVM = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
+    <div
+      aria-live="polite"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -306,27 +312,58 @@ export const RentVM = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Step 1: Configuration */}
-          {currentStep === 1 && (
-            <Step1
-              vms={vms}
-              vmName={vmName}
-              setVmName={setVmName}
-              diskSize={diskSize}
-              setDiskSize={setDiskSize}
-              region={region}
-              setRegion={setRegion}
-              os={os}
-              setOs={setOs}
-              isNameAvailable={isNameAvailable}
-              selectedVMConfig={selectedVMConfig || null}
-              setSelectedVMConfig={(config) =>
-                setSelectedConfig(config?.id || "")
-              }
-              setStep={setCurrentStep}
-              selectedConfig={selectedConfig}
-              setSelectedConfig={setSelectedConfig}
-            />
-          )}
+          {currentStep === 1 &&
+            (loading ? (
+              <div className="space-y-6">
+                <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+                  <div className="h-5 bg-muted rounded w-36 mb-4" />
+                  <div className="h-10 bg-muted rounded w-full" />
+                </div>
+                <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+                  <div className="h-5 bg-muted rounded w-48 mb-2" />
+                  <div className="h-4 bg-muted rounded w-64 mb-4" />
+                  <div className="space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <div key={i} className="h-16 bg-muted rounded-lg" />
+                    ))}
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+                    <div className="h-5 bg-muted rounded w-24 mb-4" />
+                    <div className="h-10 bg-muted rounded w-full" />
+                  </div>
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+                    <div className="h-5 bg-muted rounded w-36 mb-4" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {[...Array(4)].map((_, i) => (
+                        <div key={i} className="h-16 bg-muted rounded-lg" />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Step1
+                vms={vms}
+                vmName={vmName}
+                setVmName={setVmName}
+                diskSize={diskSize}
+                setDiskSize={setDiskSize}
+                region={region}
+                setRegion={setRegion}
+                os={os}
+                setOs={setOs}
+                isNameAvailable={isNameAvailable}
+                selectedVMConfig={selectedVMConfig || null}
+                setSelectedVMConfig={(config) =>
+                  setSelectedConfig(config?.id || "")
+                }
+                setStep={setCurrentStep}
+                selectedConfig={selectedConfig}
+                setSelectedConfig={setSelectedConfig}
+              />
+            ))}
 
           {/* Step 2: Payment Method */}
           {currentStep === 2 && (

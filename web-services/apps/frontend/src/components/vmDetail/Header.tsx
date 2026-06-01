@@ -1,7 +1,15 @@
 import { motion } from "motion/react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import type { VM } from "types/vm";
 import { calculatePrice } from "@/lib/vm";
@@ -27,6 +35,7 @@ export const Header = ({ vm }: { vm: VM }) => {
   const wallet = useAnchorWallet();
   const { watch } = useTxConfirm(wallet?.publicKey?.toBase58());
   const [txStatus, setTxStatus] = useState<TxStatus>("idle");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const navigate = useNavigate();
 
   const handleDelete = async () => {
@@ -123,12 +132,44 @@ export const Header = ({ vm }: { vm: VM }) => {
             variant="destructive"
             size="sm"
             className={`cursor-pointer ${busy ? "opacity-50" : ""}`}
-            onClick={handleDelete}
+            onClick={() => setShowDeleteConfirm(true)}
             disabled={busy}
           >
             <Trash2 className="h-4 w-4 mr-2" />
             {DELETE_LABEL[txStatus]}
           </Button>
+          <Dialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Delete Virtual Machine
+                </DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete {vm.name}? This action will
+                  terminate your instance, and you may incur charges for
+                  remaining time. This action cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setShowDeleteConfirm(false);
+                    handleDelete();
+                  }}
+                >
+                  Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <p className="text-muted-foreground mt-2">

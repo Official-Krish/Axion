@@ -118,6 +118,8 @@ export default function Contact() {
               ) : (
                 <motion.form
                   key="form"
+                  role="form"
+                  aria-label="Contact form"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   onSubmit={(e) => {

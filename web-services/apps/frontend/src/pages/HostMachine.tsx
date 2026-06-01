@@ -263,6 +263,7 @@ export function HostRegister() {
 
   return (
     <div
+      aria-live="polite"
       className="min-h-screen pt-24 pb-32 px-6"
       style={{ background: "#080810" }}
     >

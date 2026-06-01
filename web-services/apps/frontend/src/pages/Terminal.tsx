@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { motion } from "motion/react";
 import { Terminal } from "@xterm/xterm";
 import { FitAddon } from "@xterm/addon-fit";
 import { Button } from "@/components/ui/button";
@@ -364,7 +365,12 @@ const SSHTerminal = () => {
 
   if (isAuthenticated && isConnected) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
+      <motion.div
+        aria-live="polite"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="min-h-screen bg-background flex flex-col"
+      >
         {/* Header */}
         <div className="bg-card border-b px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -409,11 +415,10 @@ const SSHTerminal = () => {
         <div className="flex-1 p-4">
           <div
             ref={terminalRef}
-            className="w-full h-[600px] bg-card rounded-lg shadow-sm"
-            style={{ minHeight: "600px" }}
+            className="w-full min-h-[300px] md:min-h-[600px] bg-card rounded-lg shadow-sm"
           />
         </div>
-      </div>
+      </motion.div>
     );
   }
 

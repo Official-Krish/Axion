@@ -139,6 +139,7 @@ export function AdminPage() {
   const [withdrawVault, setWithdrawVault] = useState({ amount: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vms, setVMs] = useState<VM[]>([]);
+  const [loadingVms, setLoadingVms] = useState(false);
 
   // Track pending signatures → which op they belong to
   const pendingSigs = useRef<Map<string, (event: IndexerEvent) => void>>(
@@ -179,12 +180,14 @@ export function AdminPage() {
 
   useEffect(() => {
     if (activeTab !== "vms") return;
+    setLoadingVms(true);
     api
       .get(`/vm/getAll?adminKey=${wallet?.publicKey}`)
       .then((res) => {
         if (res.status === 200) setVMs(res.data || []);
       })
-      .catch(() => toast.error("Failed to load virtual machines"));
+      .catch(() => toast.error("Failed to load virtual machines"))
+      .finally(() => setLoadingVms(false));
   }, [activeTab, wallet?.publicKey]);
 
   // ── Helper: submit tx, show "submitted", wait for indexer event ──
@@ -400,7 +403,10 @@ export function AdminPage() {
   const busy = (op: OpState) => op.status === "submitted";
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-6 mt-20">
+    <div
+      aria-live="polite"
+      className="min-h-screen bg-gradient-to-br from-background via-background to-muted/30 p-6 mt-20"
+    >
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 left-10 w-72 h-48 bg-gradient-to-br from-primary/5 to-accent/5 rounded-3xl blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-10 w-96 h-64 bg-gradient-to-br from-secondary/5 to-muted/5 rounded-3xl blur-3xl animate-pulse delay-1000" />
@@ -626,7 +632,40 @@ export function AdminPage() {
 
           {/* ── VM tab ────────────────────────────────────────────── */}
           <TabsContent value="vms" className="space-y-6">
-            {vms.length === 0 ? (
+            {loadingVms ? (
+              <Card>
+                <CardHeader>
+                  <div className="h-6 bg-muted rounded w-64 animate-pulse" />
+                  <div className="h-4 bg-muted rounded w-48 animate-pulse mt-2" />
+                </CardHeader>
+                <CardContent>
+                  <div className="border rounded-lg overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {[...Array(10)].map((_, i) => (
+                            <TableHead key={i}>
+                              <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                            </TableHead>
+                          ))}
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {[...Array(3)].map((_, row) => (
+                          <TableRow key={row}>
+                            {[...Array(10)].map((_, cell) => (
+                              <TableCell key={cell}>
+                                <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : vms.length === 0 ? (
               <Alert>
                 <AlertDescription>No virtual machines found.</AlertDescription>
               </Alert>
@@ -643,57 +682,59 @@ export function AdminPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>VM ID</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Type</TableHead>
-                          <TableHead>Region</TableHead>
-                          <TableHead>Resources</TableHead>
-                          <TableHead>IP Address</TableHead>
-                          <TableHead>Cost</TableHead>
-                          <TableHead>Duration</TableHead>
-                          <TableHead>Created At</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {paginatedVMs.map((vm) => (
-                          <TableRow key={vm.id}>
-                            <TableCell className="font-mono text-sm">
-                              {vm.instanceId}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {vm.name}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(vm.status)}</TableCell>
-                            <TableCell>{vm.VMConfig.machineType}</TableCell>
-                            <TableCell>{vm.region}</TableCell>
-                            <TableCell className="text-sm">
-                              <div>{vm.VMConfig.os}</div>
-                              <div className="text-muted-foreground">
-                                {vm.VMConfig.diskSize} GB
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {vm.ipAddress}
-                            </TableCell>
-                            <TableCell className="font-medium">
-                              {Number(vm.price).toFixed(6)} SOL
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {vm.endTime
-                                ? `${Math.floor((new Date(vm.endTime).getTime() - new Date(vm.createdAt).getTime()) / 60000)} min`
-                                : "N/A"}
-                            </TableCell>
-                            <TableCell className="text-sm">
-                              {formatter.format(new Date(vm.createdAt))}
-                            </TableCell>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>VM ID</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Type</TableHead>
+                            <TableHead>Region</TableHead>
+                            <TableHead>Resources</TableHead>
+                            <TableHead>IP Address</TableHead>
+                            <TableHead>Cost</TableHead>
+                            <TableHead>Duration</TableHead>
+                            <TableHead>Created At</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {paginatedVMs.map((vm) => (
+                            <TableRow key={vm.id}>
+                              <TableCell className="font-mono text-sm">
+                                {vm.instanceId}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {vm.name}
+                              </TableCell>
+                              <TableCell>{getStatusBadge(vm.status)}</TableCell>
+                              <TableCell>{vm.VMConfig.machineType}</TableCell>
+                              <TableCell>{vm.region}</TableCell>
+                              <TableCell className="text-sm">
+                                <div>{vm.VMConfig.os}</div>
+                                <div className="text-muted-foreground">
+                                  {vm.VMConfig.diskSize} GB
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {vm.ipAddress}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {Number(vm.price).toFixed(6)} SOL
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {vm.endTime
+                                  ? `${Math.floor((new Date(vm.endTime).getTime() - new Date(vm.createdAt).getTime()) / 60000)} min`
+                                  : "N/A"}
+                              </TableCell>
+                              <TableCell className="text-sm">
+                                {formatter.format(new Date(vm.createdAt))}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   </div>
 
                   {totalPages > 1 && (

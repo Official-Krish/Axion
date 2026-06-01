@@ -114,39 +114,53 @@ export const Step1 = ({
           </CardHeader>
           <CardContent>
             <div className="grid gap-4">
-              {vms.map((config) => (
-                <div
-                  key={config.id}
-                  onClick={() => setSelectedConfig(config.id)}
-                  className={`p-4 rounded-lg border cursor-pointer transition-all hover:border-primary/50 ${
-                    selectedConfig === config.id
-                      ? "border-primary bg-primary/5"
-                      : "border-border bg-background"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium">
-                            {config.machineType}
-                          </span>
+              {vms.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-8 text-center">
+                  No configurations available. Please try again later.
+                </p>
+              ) : (
+                vms.map((config) => (
+                  <div
+                    key={config.id}
+                    onClick={() => setSelectedConfig(config.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedConfig(config.id);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    className={`p-4 rounded-lg border cursor-pointer transition-all hover:border-primary/50 ${
+                      selectedConfig === config.id
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">
+                              {config.machineType}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {config.description}
+                          </p>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {config.description}
-                        </p>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-mono font-medium">
-                        {prices[config.id]
-                          ? `${prices[config.id].toFixed(6)} SOL/hr`
-                          : "Calculating..."}
+                      <div className="text-right">
+                        <div className="font-mono font-medium">
+                          {prices[config.id]
+                            ? `${prices[config.id].toFixed(6)} SOL/hr`
+                            : "Calculating..."}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>
@@ -194,6 +208,14 @@ export const Step1 = ({
                   <div
                     key={osOption.value}
                     onClick={() => setOs(osOption.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setOs(osOption.value);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
                     className={`p-3 rounded-lg border cursor-pointer transition-all hover:border-primary/50 ${
                       os === osOption.value
                         ? "border-primary bg-primary/5"

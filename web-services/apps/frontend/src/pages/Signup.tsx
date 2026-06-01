@@ -156,7 +156,12 @@ export function SignUp() {
               )}
             </motion.div>
 
-            <motion.form onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              onSubmit={handleSubmit}
+              role="form"
+              aria-label="Sign up form"
+              className="space-y-4"
+            >
               <div className="space-y-4">
                 <Label htmlFor="name" className="flex items-center space-x-2">
                   <User className="h-4 w-4" />

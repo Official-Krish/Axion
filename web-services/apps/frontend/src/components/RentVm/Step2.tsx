@@ -113,6 +113,11 @@ export const Step2 = ({
                       }
                       className="mt-2 w-33"
                     />
+                    {duration !== undefined && duration <= 0 && (
+                      <p className="text-red-500 text-sm mt-1">
+                        Duration must be greater than 0.
+                      </p>
+                    )}
                   </motion.div>
                 )}
               </div>
@@ -158,6 +163,11 @@ export const Step2 = ({
                         placeholder="Enter amount in SOL"
                         className="my-4 w-32"
                       />
+                      {escrowAmount !== undefined && escrowAmount <= 0 && (
+                        <p className="text-red-500 text-sm mt-1">
+                          Escrow amount must be greater than 0.
+                        </p>
+                      )}
                       <p className="text-xs text-muted-foreground mt-1">
                         ≈{" "}
                         {selectedVMConfig

@@ -212,6 +212,8 @@ export function Dashboard() {
               className="group p-6 rounded-2xl border border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300"
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              role="button"
+              tabIndex={0}
               onClick={() => {
                 if (vm.status === "RUNNING") {
                   navigate(
@@ -223,6 +225,22 @@ export function Dashboard() {
                   toast.info("This VM is not running.", {
                     position: "top-right",
                   });
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  if (vm.status === "RUNNING") {
+                    navigate(
+                      vm.provider === "LOCAL"
+                        ? `/depin/deployment/${vm.id}`
+                        : `/vm/${vm.id}`,
+                    );
+                  } else {
+                    toast.info("This VM is not running.", {
+                      position: "top-right",
+                    });
+                  }
                 }
               }}
             >

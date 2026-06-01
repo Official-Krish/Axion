@@ -144,7 +144,10 @@ export function VMDetails() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
+    <div
+      aria-live="polite"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+    >
       <Header vm={vm} />
 
       <div className="grid lg:grid-cols-3 gap-8">
