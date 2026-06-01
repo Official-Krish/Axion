@@ -16,7 +16,7 @@ spec:
   project: default
 
   source:
-    repoURL: https://github.com/Official-Krish/axion
+    repoURL: https://github.com/Official-Krish/Axion
 
     targetRevision: main
 
