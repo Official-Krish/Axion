@@ -1,4 +1,4 @@
-import prisma from "@Axion/db";
+import prisma from "@axion/db";
 
 async function main() {
   const vmTypes = [

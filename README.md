@@ -770,18 +770,6 @@ cd web-services/apps/backend && bun run test
 
 ---
 
-## Roadmap
-
-### v3.0 (Future)
-- AI-powered resource optimization
-- Cross-chain payment support (Ethereum, Polygon)
-- Decentralized storage integration (Filecoin, Arweave)
-- Advanced security features (SGX enclaves)
-- Spot instance market for unused capacity
-- Mobile app (React Native)
-
----
-
 ## License
 
 MIT — see [LICENSE](LICENSE).

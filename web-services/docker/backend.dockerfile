@@ -1,52 +1,72 @@
-# ---------- builder ----------
-FROM oven/bun:alpine AS builder
-
-RUN apk add --no-cache openssl-dev build-base python3
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json bun.lock ./
-COPY packages ./packages
-COPY apps/backend/package.json ./apps/backend/
+# Root files
+COPY package.json bun.lock turbo.json ./
+
+# Workspace manifests
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/utilities/package.json ./packages/utilities/package.json
+COPY packages/types/package.json ./packages/types/package.json
+
+# Prisma schema
+COPY packages/db/prisma ./packages/db/prisma
+
+# Install all dependencies
 RUN bun install
 
-# Copy source and build
+# Copy source
 COPY apps/backend ./apps/backend
-RUN bun run prisma:generate
+COPY packages/db ./packages/db
+COPY packages/utilities ./packages/utilities
+COPY packages/types ./packages/types
+COPY packages/typescript-config ./packages/typescript-config
+COPY packages/eslint-config ./packages/eslint-config
 
-# Build the application
-RUN cd apps/backend && bun build index.ts --outdir dist --target bun --minify
+# Generate Prisma client
+RUN cd packages/db && bun run db:generate
 
-# Install production dependencies
-RUN rm -rf node_modules && bun install --production
+# Build application
+RUN cd apps/backend && bun run build
 
-# Clean up unnecessary files
-RUN find node_modules -name "*.md" -delete \
-  && find node_modules -name "*.txt" -delete \
-  && find node_modules -name "*.map" -delete \
-  && find node_modules -name "test*" -type d -exec rm -rf {} + \
-  && find node_modules -name "docs" -type d -exec rm -rf {} + \
-  && find node_modules -name "examples" -type d -exec rm -rf {} +
-
-# ---------- runtime ----------
-FROM oven/bun:alpine AS runtime
-
-RUN addgroup -g 1001 -S nodejs \
-  && adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G nodejs nodejs
+FROM oven/bun:1 AS prod-deps
 
 WORKDIR /app
 
-# Copy only what's needed for production
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/dist ./apps/backend/dist
-COPY --from=builder --chown=nodejs:nodejs /app/apps/backend/package.json ./apps/backend/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/packages ./packages
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
+COPY package.json bun.lock turbo.json ./
 
-USER nodejs
+COPY apps/backend/package.json ./apps/backend/package.json
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/utilities/package.json ./packages/utilities/package.json
+COPY packages/types/package.json ./packages/types/package.json
+COPY packages/db/prisma ./packages/db/prisma
+
+RUN bun install
+
+FROM oven/bun:1-slim AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Production dependencies only
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# App package.json
+COPY --from=builder /app/apps/backend/package.json ./apps/backend/package.json
+
+# Built app
+COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+
+# Runtime workspace packages
+COPY --from=builder /app/packages/db ./packages/db
+COPY --from=builder /app/packages/utilities ./packages/utilities
+COPY --from=builder /app/packages/types ./packages/types
+
+WORKDIR /app/apps/backend
 
 EXPOSE 3000
 
-# Run the built JavaScript file directly
-CMD ["bun", "run", "./apps/backend/dist/index.js"]
+CMD ["bun", "dist/index.js"]

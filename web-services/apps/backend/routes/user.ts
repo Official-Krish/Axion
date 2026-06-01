@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { SignInSchema, SignUpSchema } from "@Axion/types";
+import { SignInSchema, SignUpSchema } from "@axion/types";
 import prisma from "@axion/db";
 import { authMiddleware } from "@axion/utilities/auth";
 import {

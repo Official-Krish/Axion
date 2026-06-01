@@ -16,7 +16,7 @@ import {
 import { useTheme } from "@/components/themeProvider";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useNavigate } from "react-router-dom";
-import "xterm/css/xterm.css";
+import "@xterm/xterm/css/xterm.css";
 import { WS_RELAYER_URL } from "@/config";
 
 const SSHTerminal = () => {
