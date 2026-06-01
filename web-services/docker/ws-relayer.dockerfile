@@ -1,49 +1,49 @@
-# ---------- builder ----------
-FROM oven/bun:alpine AS builder
-
-RUN apk add --no-cache openssl-dev build-base python3
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-# Install dependencies
-COPY package.json bun.lock ./
-COPY apps/ws-relayer/package.json ./apps/ws-relayer/
+# Root files
+COPY package.json bun.lock turbo.json ./
+
+# Workspace manifests
+COPY apps/ws-relayer/package.json ./apps/ws-relayer/package.json
+
+# Install all dependencies
 RUN bun install
 
-# Copy source and build
+# Copy source
 COPY apps/ws-relayer ./apps/ws-relayer
 
-# Build the application
-RUN cd apps/ws-relayer && bun build index.ts --outdir dist --target bun --minify
+# Build application
+RUN cd apps/ws-relayer && bun run build
 
-# Install production dependencies
-RUN rm -rf node_modules && bun install --production
-
-# Clean up unnecessary files
-RUN find node_modules -name "*.md" -delete \
-  && find node_modules -name "*.txt" -delete \
-  && find node_modules -name "*.map" -delete \
-  && find node_modules -name "test*" -type d -exec rm -rf {} + \
-  && find node_modules -name "docs" -type d -exec rm -rf {} + \
-  && find node_modules -name "examples" -type d -exec rm -rf {} +
-
-# ---------- runtime ----------
-FROM oven/bun:alpine AS runtime
-
-RUN addgroup -g 1001 -S nodejs \
-  && adduser -S -D -H -u 1001 -h /app -s /sbin/nologin -G nodejs nodejs
+FROM oven/bun:1 AS prod-deps
 
 WORKDIR /app
 
-# Copy only what's needed for production
-COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nodejs:nodejs /app/apps/ws-relayer/dist ./apps/ws-relayer/dist
-COPY --from=builder --chown=nodejs:nodejs /app/apps/ws-relayer/package.json ./apps/ws-relayer/package.json
-COPY --from=builder --chown=nodejs:nodejs /app/package.json ./package.json
+COPY package.json bun.lock turbo.json ./
 
-USER nodejs
+COPY apps/ws-relayer/package.json ./apps/ws-relayer/package.json
+
+RUN bun install
+
+FROM oven/bun:1-slim AS runtime
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+
+# Production dependencies only
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# App package.json
+COPY --from=builder /app/apps/ws-relayer/package.json ./apps/ws-relayer/package.json
+
+# Built app
+COPY --from=builder /app/apps/ws-relayer/dist ./apps/ws-relayer/dist
+
+WORKDIR /app/apps/ws-relayer
 
 EXPOSE 9093
 
-# Run the built JavaScript file directly
-CMD ["bun", "run", "./apps/ws-relayer/dist/index.js"]
+CMD ["bun", "dist/index.js"]

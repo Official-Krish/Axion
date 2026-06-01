@@ -13,7 +13,8 @@
   "devDependencies": {
     "@types/bun": "latest",
     "@axion/db": "workspace:*",
-    "@axion/types": "workspace:^"
+    "@axion/types": "workspace:^",
+    "@axion/utilities": "workspace:^"
   },
   "peerDependencies": {
     "typescript": "^5"

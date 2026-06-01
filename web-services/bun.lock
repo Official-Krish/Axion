@@ -41,6 +41,7 @@
       "devDependencies": {
         "@axion/db": "workspace:*",
         "@axion/types": "workspace:^",
+        "@axion/utilities": "workspace:^",
         "@types/bun": "latest",
       },
       "peerDependencies": {

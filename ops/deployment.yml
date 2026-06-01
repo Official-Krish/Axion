@@ -17,12 +17,12 @@ spec:
     spec:
       containers:
         - name: axion-frontend
-          image: krishanand01/axion-frontend:v2.2
+          image: krishanand01/axion-frontend:v1.0.1
           ports:
-            - containerPort: 5173
+            - containerPort: 80
           volumeMounts:
             - name: env-file
-              mountPath: /app/.env
+              mountPath: /etc/axion/frontend.env
               subPath: env
       volumes:
         - name: env-file
@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: axion-backend
-          image: krishanand01/axion-backend:v2.1
+          image: krishanand01/axion-backend:v1.0
           ports:
             - containerPort: 3000
           volumeMounts:
@@ -71,6 +71,36 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
+  name: axion-indexer
+  namespace: axion
+  labels:
+    app: axion-indexer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: axion-indexer
+  template:
+    metadata:
+      labels:
+        app: axion-indexer
+    spec:
+      containers:
+        - name: axion-indexer
+          image: krishanand01/axion-indexer:v1.0
+          volumeMounts:
+            - name: env-file
+              mountPath: /app/apps/indexer/.env
+              subPath: env
+      volumes:
+        - name: env-file
+          secret:
+            secretName: axion-indexer-env
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
   name: axion-worker
   namespace: axion
   labels:
@@ -87,7 +117,7 @@ spec:
     spec:
       containers:
         - name: axion-worker
-          image: krishanand01/axion-worker:v2.1
+          image: krishanand01/axion-worker:v1.0.2
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/worker/.env
@@ -122,7 +152,7 @@ spec:
     spec:
       containers:
         - name: axion-ws-relayer
-          image: krishanand01/axion-ws-relayer:v1.1
+          image: krishanand01/axion-ws-relayer:v1.0
           ports:
             - containerPort: 9093
           volumeMounts:
@@ -134,6 +164,7 @@ spec:
           secret:
             secretName: axion-ws-relayer-env
 
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -153,9 +184,18 @@ spec:
     spec:
       containers:
         - name: axion-depin-ws-relayer
-          image: krishanand01/axion-depin-ws-relayer:v2.1
+          image: krishanand01/axion-depin-ws-relayer:v1.0
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: env-file
+              mountPath: /app/apps/depin-ws-relayer/.env
+              subPath: env
+      volumes:
+        - name: env-file
+          secret:
+            secretName: axion-depin-ws-relayer-env
+
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -183,3 +223,4 @@ spec:
       volumes:
       - name: redis-data
         emptyDir: {}
+---

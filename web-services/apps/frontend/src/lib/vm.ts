@@ -1,4 +1,5 @@
 import axios from "axios";
+import { runtimeEnv } from "../runtimeEnv";
 
 export const calculatePrice = async (
   machineType: string,
@@ -7,7 +8,7 @@ export const calculatePrice = async (
 ): Promise<number> => {
   try {
     const response = await axios.get(
-      `${import.meta.env.VITE_BACKEND_URL}/vm/calculatePrice`,
+      `${runtimeEnv.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL || "http://localhost:3000/api/v2"}/vm/calculatePrice`,
       {
         params: {
           machineType,

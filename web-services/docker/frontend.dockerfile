@@ -1,23 +1,26 @@
-# ---- Stage 1: Build the React app ----
-FROM node:20 AS builder
+FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
-COPY apps/frontend/package*.json ./
+COPY package.json bun.lock turbo.json ./
+COPY apps/frontend/package.json apps/frontend/package.json
 
-RUN npm install --legacy-peer-deps --verbose
+RUN bun install
 
-COPY apps/frontend/ ./
+COPY apps/frontend ./apps/frontend
 
-RUN npm run build
+ARG VITE_BACKEND_URL=/api/v1
+ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
 
-# ---- Stage 2: Serve with Nginx ----
-FROM nginx:alpine AS runner
+WORKDIR /app/apps/frontend
 
-COPY --from=builder /app/dist /usr/share/nginx/html
+RUN bun run build
 
-COPY apps/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+FROM nginx:1.27-alpine AS runtime
 
-EXPOSE 5173
+COPY docker/nginx.frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/apps/frontend/dist /usr/share/nginx/html
 
-CMD ["nginx", "-g", "daemon off;"]
+EXPOSE 80
+
+CMD ["sh", "-c", "set -a; if [ -f /etc/axion/frontend.env ]; then . /etc/axion/frontend.env; fi; set +a; cat > /usr/share/nginx/html/env.js <<EOF\nwindow.__AXION_ENV__ = {\n  VITE_BACKEND_URL: \"${VITE_BACKEND_URL:-}\",\n  VITE_ADMIN_KEY: \"${VITE_ADMIN_KEY:-}\",\n  VITE_WS_RELAYER_URL: \"${VITE_WS_RELAYER_URL:-}\",\n  VITE_SOLANA_RPC_URL: \"${VITE_SOLANA_RPC_URL:-}\",\n};\nEOF\nexec nginx -g 'daemon off;'"]
