@@ -21,6 +21,8 @@ import { toast } from "sonner";
 import { api } from "@/lib/api";
 import type { Machine } from "types/depinMachines";
 import { motion } from "motion/react";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
 
 interface FormProps {
   formData: {
@@ -50,8 +52,47 @@ interface FormProps {
 }
 
 export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
+  const [isSearching, setIsSearching] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.appName) {
+      newErrors.appName = "Application name is required";
+    }
+    if (!formData.dockerImage) {
+      newErrors.dockerImage = "Docker image is required";
+    } else if (
+      !/^[a-zA-Z0-9][a-zA-Z0-9._/-]*(:[a-zA-Z0-9._-]+)?$/.test(
+        formData.dockerImage,
+      )
+    ) {
+      newErrors.dockerImage = "Invalid image format (e.g. nginx:latest)";
+    }
+    if (!formData.cpu) {
+      newErrors.cpu = "CPU is required";
+    } else if (Number(formData.cpu) <= 0) {
+      newErrors.cpu = "CPU must be greater than 0";
+    }
+    if (!formData.ram) {
+      newErrors.ram = "RAM is required";
+    } else if (Number(formData.ram) <= 0) {
+      newErrors.ram = "RAM must be greater than 0";
+    }
+    if (!formData.diskSize) {
+      newErrors.diskSize = "Disk size is required";
+    } else if (Number(formData.diskSize) <= 0) {
+      newErrors.diskSize = "Disk size must be greater than 0";
+    }
+    return newErrors;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+    setIsSearching(true);
     try {
       const res = await api.post("/user/depin/findVM", {
         cpu: formData.cpu,
@@ -69,6 +110,7 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
     } catch {
       toast.error("Failed to find vm. Please try again.");
     }
+    setIsSearching(false);
   };
   return (
     <motion.div
@@ -89,7 +131,11 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
         </CardHeader>
 
         <CardContent>
-          <form className="space-y-6">
+          <form
+            className="space-y-6"
+            role="form"
+            aria-label="Application Configuration Form"
+          >
             {/* Basic Info */}
             <div className="space-y-4">
               <div>
@@ -100,11 +146,15 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                   id="appName"
                   placeholder="my-awesome-app"
                   value={formData.appName}
-                  onChange={(e) =>
-                    setFormData({ ...formData, appName: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, appName: e.target.value });
+                    setErrors((prev) => ({ ...prev, appName: "" }));
+                  }}
                   required
                 />
+                {errors.appName && (
+                  <p className="text-sm text-red-500 mt-1">{errors.appName}</p>
+                )}
               </div>
 
               <div>
@@ -115,11 +165,17 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                   id="dockerImage"
                   placeholder="nginx:latest or myregistry/myapp:v1.0"
                   value={formData.dockerImage}
-                  onChange={(e) =>
-                    setFormData({ ...formData, dockerImage: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, dockerImage: e.target.value });
+                    setErrors((prev) => ({ ...prev, dockerImage: "" }));
+                  }}
                   required
                 />
+                {errors.dockerImage && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {errors.dockerImage}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -157,9 +213,10 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                   </Label>
                   <Select
                     value={formData.cpu}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, cpu: value })
-                    }
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, cpu: value });
+                      setErrors((prev) => ({ ...prev, cpu: "" }));
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -172,6 +229,9 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                       <SelectItem value="8">8 cores</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.cpu && (
+                    <p className="text-sm text-red-500 mt-1">{errors.cpu}</p>
+                  )}
                 </div>
 
                 <div>
@@ -184,9 +244,10 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                   </Label>
                   <Select
                     value={formData.ram}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, ram: value })
-                    }
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, ram: value });
+                      setErrors((prev) => ({ ...prev, ram: "" }));
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -200,6 +261,9 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                       <SelectItem value="16">16 GB</SelectItem>
                     </SelectContent>
                   </Select>
+                  {errors.ram && (
+                    <p className="text-sm text-red-500 mt-1">{errors.ram}</p>
+                  )}
                 </div>
 
                 <div>
@@ -214,12 +278,18 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                     id="storage"
                     type="number"
                     value={formData.diskSize}
-                    onChange={(e) =>
-                      setFormData({ ...formData, diskSize: e.target.value })
-                    }
+                    onChange={(e) => {
+                      setFormData({ ...formData, diskSize: e.target.value });
+                      setErrors((prev) => ({ ...prev, diskSize: "" }));
+                    }}
                     min="1"
                     max="1000"
                   />
+                  {errors.diskSize && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.diskSize}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="ports" className="mb-3">
@@ -259,15 +329,16 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
               size="lg"
               onClick={handleSubmit}
-              disabled={
-                !formData.appName ||
-                !formData.dockerImage ||
-                !formData.cpu ||
-                !formData.ram ||
-                !formData.diskSize
-              }
+              disabled={isSearching}
             >
-              Search VM
+              {isSearching ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Searching...
+                </span>
+              ) : (
+                "Search VM"
+              )}
             </Button>
           </form>
         </CardContent>

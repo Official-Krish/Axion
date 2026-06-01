@@ -25,15 +25,43 @@ export function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    password: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.name) {
+      newErrors.name = "Username is required";
+    } else if (formData.name.length < 3) {
+      newErrors.name = "Username must be at least 3 characters";
+    }
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    return newErrors;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     if (!wallet.connected) {
-      alert("Please connect your wallet first.");
+      toast.error("Please connect your wallet first.");
       setIsLoading(false);
       return;
     }
@@ -48,7 +76,7 @@ export function SignUp() {
         });
         localStorage.setItem("token", `Bearer ${res.data.token}`);
         localStorage.setItem("email", formData.email);
-        setFormData({ name: "", email: "" });
+        setFormData({ name: "", email: "", password: "" });
         navigate("/dashboard");
       } else {
         toast.error("Failed to create account. Please try again.", {
@@ -66,6 +94,7 @@ export function SignUp() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
   };
 
   return (
@@ -143,6 +172,9 @@ export function SignUp() {
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
+                {errors.name && (
+                  <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -160,13 +192,41 @@ export function SignUp() {
                   required
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label
+                  htmlFor="password"
+                  className="flex items-center space-x-2"
+                >
+                  <span>Password</span>
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 className="w-full group cursor-pointer"
                 disabled={
-                  !formData.email || !formData.name || !wallet?.connected
+                  !formData.email ||
+                  !formData.name ||
+                  !formData.password ||
+                  !wallet?.connected
                 }
               >
                 {isLoading ? (

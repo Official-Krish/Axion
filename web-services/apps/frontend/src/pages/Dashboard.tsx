@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Plus, Search, ExternalLink } from "lucide-react";
+import {
+  Plus,
+  Search,
+  ExternalLink,
+  RefreshCw,
+  AlertCircle,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "@/lib/api";
 import { type VM } from "../../types/vm";
@@ -13,14 +19,37 @@ import { getVmDetails } from "@/lib/vm";
 import { toast } from "sonner";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 
+function SkeletonCard() {
+  return (
+    <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+      <div className="flex items-center space-x-4 mb-3">
+        <div className="h-5 bg-muted rounded w-48" />
+        <div className="h-5 bg-muted rounded w-20" />
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i}>
+            <div className="h-4 bg-muted rounded w-24 mb-1" />
+            <div className="h-3 bg-muted rounded w-16" />
+          </div>
+        ))}
+      </div>
+      <div className="mt-3 pt-3 border-t border-border/50">
+        <div className="h-3 bg-muted rounded w-64" />
+      </div>
+    </div>
+  );
+}
+
 export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [vms, setVMs] = useState<VM[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const navigate = useNavigate();
   const wallet = useWallet();
 
-  // Real-time VM status updates from indexer
   useIndexerEvents({
     account: wallet.publicKey?.toBase58(),
     onEvent: (event) => {
@@ -57,19 +86,20 @@ export function Dashboard() {
     },
   });
 
-  useEffect(() => {
-    if (!wallet || !localStorage.getItem("token")) {
-      return;
+  const fetchVMs = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get("/vmInstance/getAll");
+      setVMs(res.data.vms);
+    } catch {
+      setError(true);
     }
-    const getVMs = async () => {
-      try {
-        const res = await api.get("/vmInstance/getAll");
-        setVMs(res.data.vms);
-      } catch {
-        /* toast handled by api interceptor */
-      }
-    };
-    getVMs();
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchVMs();
   }, [wallet]);
 
   const filteredVMs = vms.filter((vm) => {
@@ -80,30 +110,11 @@ export function Dashboard() {
     return matchesSearch && matchesFilter;
   });
 
-  if (!wallet.connected || !localStorage.getItem("token")) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-          <p className="text-muted-foreground mb-6">
-            Please connect your wallet and signInto manage your virtual
-            machines.
-          </p>
-          <Link to="/signin">
-            <Button className="cursor-pointer">SignIn</Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
-      {/* Header */}
+    <div
+      className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+      aria-live="polite"
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -132,7 +143,6 @@ export function Dashboard() {
         </div>
       </motion.div>
 
-      {/* Controls */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -146,6 +156,7 @@ export function Dashboard() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
+            aria-label="Search"
           />
         </div>
 
@@ -164,98 +175,140 @@ export function Dashboard() {
         </div>
       </motion.div>
 
-      {/* VM List */}
-      <div className="space-y-4">
-        {filteredVMs.map((vm, index) => (
-          <motion.div
-            key={vm.id}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className="group p-6 rounded-2xl border border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300 cursor-poiner"
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => {
-              if (vm.status === "RUNNING") {
-                navigate(
-                  vm.provider === "LOCAL"
-                    ? `/depin/deployment/${vm.id}`
-                    : `/vm/${vm.id}`,
-                );
-              } else {
-                toast.info("This VM is not running.", {
-                  position: "top-right",
-                });
-              }
-            }}
-          >
-            <div className="flex items-center justify-between cursor-pointer">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-4 mb-3">
-                  <div className="text-lg font-semibold truncate hover:text-primary transition-colors">
-                    {vm.name}
-                  </div>
-                  <StatusBadge status={vm.status} />
-                  <div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-16"
+        >
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-semibold mb-2">Failed to load VMs</h2>
+          <p className="text-muted-foreground mb-6">
+            Something went wrong while fetching your virtual machines.
+          </p>
+          <Button onClick={fetchVMs} className="cursor-pointer">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry
+          </Button>
+        </motion.div>
+      )}
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
-                  <div>
-                    <span className="block font-medium text-foreground">
-                      {vm.region}
-                    </span>
-                    <span>Region</span>
+      {loading && !error && (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && (
+        <div className="space-y-4">
+          {filteredVMs.map((vm, index) => (
+            <motion.div
+              key={vm.id}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: index * 0.1 }}
+              className="group p-6 rounded-2xl border border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (vm.status === "RUNNING") {
+                  navigate(
+                    vm.provider === "LOCAL"
+                      ? `/depin/deployment/${vm.id}`
+                      : `/vm/${vm.id}`,
+                  );
+                } else {
+                  toast.info("This VM is not running.", {
+                    position: "top-right",
+                  });
+                }
+              }}
+            >
+              <div className="flex items-center justify-between cursor-pointer">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-4 mb-3">
+                    <div className="text-lg font-semibold truncate hover:text-primary transition-colors">
+                      {vm.name}
+                    </div>
+                    <StatusBadge status={vm.status} />
+                    <div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (vm.ipAddress) {
+                            window.open(`http://${vm.ipAddress}`, "_blank");
+                          } else {
+                            const path =
+                              vm.provider === "LOCAL"
+                                ? `/depin/deployment/${vm.id}`
+                                : `/vm/${vm.id}`;
+                            window.open(path, "_blank");
+                          }
+                        }}
+                        aria-label="Open VM in new tab"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <span className="block font-medium text-foreground">
-                      {vm.VMConfig?.os || vm.VMImage?.os || "N/A"}
-                    </span>
-                    <span>Operating System</span>
-                  </div>
-                  <div>
-                    <span className="block font-medium text-foreground">
-                      {vm.provider === "LOCAL"
-                        ? `${vm.VMImage?.cpu || 0}vCPUs • ${vm.VMImage?.ram || 0}Gb Ram`
-                        : `${getVmDetails(vm.VMConfig?.machineType).cpu}vCPUs • ${getVmDetails(vm.VMConfig?.machineType).ram}Gb Ram`}
-                    </span>
-                    <span>Resources</span>
-                  </div>
-                  <div>
-                    <span className="block font-medium text-foreground font-mono">
-                      {Number(vm.price).toFixed(6)} SOL
-                    </span>
-                    <span>Rented for</span>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-muted-foreground">
+                    <div>
+                      <span className="block font-medium text-foreground">
+                        {vm.region}
+                      </span>
+                      <span>Region</span>
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground">
+                        {vm.VMConfig?.os || vm.VMImage?.os || "N/A"}
+                      </span>
+                      <span>Operating System</span>
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground">
+                        {vm.provider === "LOCAL"
+                          ? `${vm.VMImage?.cpu || 0} vCPUs • ${vm.VMImage?.ram || 0} GB RAM`
+                          : `${getVmDetails(vm.VMConfig?.machineType).cpu} vCPUs • ${getVmDetails(vm.VMConfig?.machineType).ram} GB RAM`}
+                      </span>
+                      <span>Resources</span>
+                    </div>
+                    <div>
+                      <span className="block font-medium text-foreground font-mono">
+                        {Number(vm.price).toFixed(6)} SOL
+                      </span>
+                      <span>Rented for</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div className="mt-3 pt-3 border-t border-border/50 flex justify-between items-center text-sm text-muted-foreground">
-              <span>
-                Created On: {formatter.format(new Date(vm.createdAt))}
-              </span>
-              {vm.provider !== "LOCAL" && (
-                <span className="font-mono">Instance Id: {vm.instanceId}</span>
-              )}
-              {vm.provider === "LOCAL" && (
-                <span className="font-mono">
-                  Image Deployed: {vm.VMImage?.dockerImage}
+              <div className="mt-3 pt-3 border-t border-border/50 flex justify-between items-center text-sm text-muted-foreground">
+                <span>
+                  Created On: {formatter.format(new Date(vm.createdAt))}
                 </span>
-              )}
-            </div>
-          </motion.div>
-        ))}
-      </div>
+                {vm.provider !== "LOCAL" && (
+                  <span className="font-mono">
+                    Instance Id: {vm.instanceId}
+                  </span>
+                )}
+                {vm.provider === "LOCAL" && (
+                  <span className="font-mono">
+                    Image Deployed: {vm.VMImage?.dockerImage}
+                  </span>
+                )}
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
-      {filteredVMs.length === 0 && (
+      {!loading && !error && filteredVMs.length === 0 && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

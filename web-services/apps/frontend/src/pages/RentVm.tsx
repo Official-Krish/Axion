@@ -10,8 +10,6 @@ import { NavigationButton } from "@/components/RentVm/NavigationButton";
 import { CostSummary } from "@/components/RentVm/CostSummary";
 import { CredentialModal } from "@/components/RentVm/CredentialModal";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { TransferToVaultAndStartRental } from "@/lib/contract";
 
@@ -39,6 +37,23 @@ export const RentVM = () => {
   );
   const [escrowAmount, setEscrowAmount] = useState(0);
   const [currentVmId, setCurrentVmId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (errors.disk) setErrors((prev) => ({ ...prev, disk: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diskSize]);
+
+  useEffect(() => {
+    if (errors.duration) setErrors((prev) => ({ ...prev, duration: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration]);
+
+  useEffect(() => {
+    if (errors.cpu || errors.ram)
+      setErrors((prev) => ({ ...prev, cpu: "", ram: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConfig]);
 
   const wallet = useAnchorWallet();
 
@@ -120,6 +135,20 @@ export const RentVM = () => {
   );
 
   const handlePayment = async () => {
+    const validationErrors: Record<string, string> = {};
+    if (!selectedConfig) {
+      validationErrors.cpu = "CPU configuration is required";
+      validationErrors.ram = "RAM configuration is required";
+    }
+    if (!diskSize || Number(diskSize) <= 0) {
+      validationErrors.disk = "Disk size must be greater than 0";
+    }
+    if (!duration || duration <= 0) {
+      validationErrors.duration = "Duration must be greater than 0";
+    }
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     setIsConfirmOpen(false);
     setPaymentStatus("Pending");
     const id = crypto.randomUUID().substring(0, 32);
@@ -186,26 +215,6 @@ export const RentVM = () => {
       setPaymentStatus("Failed");
     }
   };
-
-  if (!wallet || !localStorage.getItem("token")) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-          <p className="text-muted-foreground mb-6">
-            Please connect your wallet and ensure you are signed in to proceed.
-          </p>
-          <Link to="/signin">
-            <Button className="cursor-pointer">SignIn</Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
 
   if (paymentStatus === "Pending") {
     return (
@@ -347,6 +356,15 @@ export const RentVM = () => {
             />
           )}
 
+          {Object.keys(errors).length > 0 && (
+            <div className="space-y-1 mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+              {Object.entries(errors).map(([key, msg]) => (
+                <p key={key} className="text-sm text-red-500">
+                  {msg}
+                </p>
+              ))}
+            </div>
+          )}
           {/* Navigation Buttons */}
           <NavigationButton
             currentStep={currentStep}

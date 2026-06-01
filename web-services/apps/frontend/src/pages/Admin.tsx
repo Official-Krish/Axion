@@ -137,6 +137,7 @@ export function AdminPage() {
   // Form states
   const [fundVault, setFundVault] = useState({ amount: "" });
   const [withdrawVault, setWithdrawVault] = useState({ amount: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [vms, setVMs] = useState<VM[]>([]);
 
   // Track pending signatures → which op they belong to
@@ -276,10 +277,12 @@ export function AdminPage() {
   };
 
   const handleFund = async () => {
+    const newErrors: Record<string, string> = {};
     if (!fundVault.amount || parseFloat(fundVault.amount) <= 0) {
-      toast.error("Valid amount required");
-      return;
+      newErrors.fundAmount = "Valid amount is required";
     }
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    if (Object.keys(newErrors).length > 0) return;
     setFundOp({ status: "submitted", message: "Signing transaction…" });
     const res = await FundVaultAccount(wallet!, parseFloat(fundVault.amount));
     if (!res?.success || !res.signature) {
@@ -298,10 +301,12 @@ export function AdminPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!withdrawVault.amount) {
-      toast.error("Amount is required");
-      return;
+    const newErrors: Record<string, string> = {};
+    if (!withdrawVault.amount || parseFloat(withdrawVault.amount) <= 0) {
+      newErrors.withdrawAmount = "Valid amount is required";
     }
+    setErrors((prev) => ({ ...prev, ...newErrors }));
+    if (Object.keys(newErrors).length > 0) return;
     const amt = parseFloat(withdrawVault.amount);
     if (vaultBalance !== null && amt > vaultBalance) {
       toast.error("Insufficient vault balance");
@@ -380,11 +385,7 @@ export function AdminPage() {
     );
   };
 
-  if (
-    !wallet ||
-    wallet.publicKey.toBase58() !== ADMIN_KEY ||
-    !localStorage.getItem("token")
-  ) {
+  if (wallet!.publicKey!.toBase58() !== ADMIN_KEY) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Alert className="max-w-md">
@@ -510,10 +511,16 @@ export function AdminPage() {
                       step="0.0001"
                       placeholder="0.0000"
                       value={fundVault.amount}
-                      onChange={(e) =>
-                        setFundVault({ ...fundVault, amount: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setFundVault({ ...fundVault, amount: e.target.value });
+                        setErrors((prev) => ({ ...prev, fundAmount: "" }));
+                      }}
                     />
+                    {errors.fundAmount && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.fundAmount}
+                      </p>
+                    )}
                   </div>
                   <Button
                     onClick={handleFund}
@@ -552,13 +559,19 @@ export function AdminPage() {
                       step="0.0001"
                       placeholder="0.0000"
                       value={withdrawVault.amount}
-                      onChange={(e) =>
+                      onChange={(e) => {
                         setWithdrawVault({
                           ...withdrawVault,
                           amount: e.target.value,
-                        })
-                      }
+                        });
+                        setErrors((prev) => ({ ...prev, withdrawAmount: "" }));
+                      }}
                     />
+                    {errors.withdrawAmount && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.withdrawAmount}
+                      </p>
+                    )}
                   </div>
                   <Button
                     onClick={handleWithdraw}

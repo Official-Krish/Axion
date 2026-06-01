@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { RequireAuth } from "./components/RequireAuth";
 import Landing from "./pages/Landing";
 import { Dashboard } from "./pages/Dashboard";
 import { RentVM } from "./pages/RentVm";
@@ -38,21 +39,112 @@ function App() {
     <ErrorBoundary>
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/rent" element={<RentVM />} />
-        <Route path="/vm/:id" element={<VMDetails />} />
-        <Route path="/hosting" element={<Hosting />} />
+        <Route
+          path="/dashboard"
+          element={
+            <RequireAuth>
+              <Dashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/rent"
+          element={
+            <RequireAuth>
+              <RentVM />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/vm/:id"
+          element={
+            <RequireAuth>
+              <VMDetails />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/hosting"
+          element={
+            <RequireAuth>
+              <Hosting />
+            </RequireAuth>
+          }
+        />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/signin" element={<SignIn />} />
-        <Route path="/ssh/:id" element={<SSHTerminal />} />
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/depin/register" element={<HostRegister />} />
-        <Route path="/depin/host/dashboard" element={<HostDashboard />} />
-        <Route path="/docker/deploy" element={<DeployApp />} />
-        <Route path="/depin/machine/:id" element={<HostMachineDetails />} />
-        <Route path="/depin/deployment/:id" element={<DepinDeployment />} />
-        <Route path="/depin/rewards" element={<ClaimRewards />} />
-        <Route path="/host" element={<Host />} />
+        <Route
+          path="/ssh/:id"
+          element={
+            <RequireAuth>
+              <SSHTerminal />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            <RequireAuth>
+              <AdminPage />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/depin/register"
+          element={
+            <RequireAuth>
+              <HostRegister />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/depin/host/dashboard"
+          element={
+            <RequireAuth>
+              <HostDashboard />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/docker/deploy"
+          element={
+            <RequireAuth>
+              <DeployApp />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/depin/machine/:id"
+          element={
+            <RequireAuth>
+              <HostMachineDetails />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/depin/deployment/:id"
+          element={
+            <RequireAuth>
+              <DepinDeployment />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/depin/rewards"
+          element={
+            <RequireAuth>
+              <ClaimRewards />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/host"
+          element={
+            <RequireAuth>
+              <Host />
+            </RequireAuth>
+          }
+        />
 
         <Route path="/docs" element={<Docs />} />
         <Route path="/api" element={<ApiReference />} />
@@ -66,9 +158,30 @@ function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/cookies" element={<Cookies />} />
         <Route path="/gdpr" element={<GDPR />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/billing" element={<Billing />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route
+          path="/profile"
+          element={
+            <RequireAuth message="Sign in to access your profile.">
+              <Profile />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/billing"
+          element={
+            <RequireAuth message="Sign in to view billing.">
+              <Billing />
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <RequireAuth message="Sign in to view notifications.">
+              <Notifications />
+            </RequireAuth>
+          }
+        />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/roadmap" element={<Roadmap />} />
         <Route path="*" element={<ComingSoon isDepin={false} />} />

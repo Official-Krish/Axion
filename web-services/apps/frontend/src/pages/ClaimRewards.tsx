@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { Link } from "react-router-dom";
 import { type Machine } from "../../types/depinMachines";
 import { toast } from "sonner";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api";
 
 // per-machine claim status
@@ -96,30 +97,39 @@ export default function ClaimRewards() {
   const wallet = useWallet();
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   // per-machine claim status
   const [claimStatuses, setClaimStatuses] = useState<
     Record<string, ClaimStatus>
   >({});
 
-  useEffect(() => {
-    if (!wallet.publicKey) return;
-    api
-      .get(`/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`)
-      .then((r) => setMachines(r.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const fetchMachines = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const r = await api.get(
+        `/user/depin/getAll?userPublicKey=${wallet.publicKey!.toBase58()}`,
+      );
+      setMachines(r.data);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
   }, [wallet.publicKey]);
+
+  useEffect(() => {
+    fetchMachines();
+  }, [fetchMachines]);
 
   const setStatus = (id: string, s: ClaimStatus) =>
     setClaimStatuses((p) => ({ ...p, [id]: s }));
 
   const handleClaim = async (id: string) => {
-    if (!wallet.publicKey) return;
     setStatus(id, "submitted");
     try {
       const res = await api.post("/user/depin/claimSOL", {
         id,
-        pubKey: wallet.publicKey.toBase58(),
+        pubKey: wallet.publicKey!.toBase58(),
       });
       if (res.status === 200) {
         setStatus(id, "confirmed");
@@ -133,32 +143,13 @@ export default function ClaimRewards() {
     }
   };
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Sign in to claim rewards
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   const total = machines.reduce((s, m) => s + m.claimedSOL, 0);
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
+    <div
+      className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden"
+      aria-live="polite"
+    >
       <div
         className="fixed inset-0 pointer-events-none"
         style={{
@@ -218,6 +209,20 @@ export default function ClaimRewards() {
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                 className="w-5 h-5 border border-zinc-300 dark:border-zinc-700 border-t-zinc-900 dark:border-t-white rounded-full"
               />
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+              <p className="text-sm text-zinc-400 dark:text-zinc-600 mb-4">
+                Failed to load machines.
+              </p>
+              <button
+                onClick={fetchMachines}
+                className="text-xs text-zinc-700 dark:text-zinc-300 hover:text-emerald-500 transition-colors flex items-center gap-1 justify-center mx-auto"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Retry
+              </button>
             </div>
           ) : machines.length === 0 ? (
             <div className="py-12 text-center">

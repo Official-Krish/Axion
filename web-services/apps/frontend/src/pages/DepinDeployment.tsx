@@ -1,9 +1,10 @@
 import { motion } from "motion/react";
 import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { type VM } from "../../types/vm";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
@@ -19,6 +20,7 @@ export function DepinDeployment() {
   const { id } = useParams();
   const [vm, setVm] = useState<VM | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const isTerminated = vm?.status === "DELETED" || vm?.status === "TERMINATED";
 
   useIndexerEvents({
@@ -37,28 +39,86 @@ export function DepinDeployment() {
     },
   });
 
-  useEffect(() => {
+  const fetchDeployment = useCallback(async () => {
     if (!id) return;
-    const fetch = async () => {
-      try {
-        const res = await api.get(`/vmInstance/getDetails?id=${id}`);
-        setVm(res.data.vmInstance);
-      } catch {
-        toast.error("Failed to load deployment details", {
-          position: "bottom-right",
-        });
-      }
-      setLoading(false);
-    };
-    fetch();
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get(`/vmInstance/getDetails?id=${id}`);
+      setVm(res.data.vmInstance);
+    } catch {
+      setError(true);
+      toast.error("Failed to load deployment details", {
+        position: "bottom-right",
+      });
+    }
+    setLoading(false);
   }, [id]);
+
+  useEffect(() => {
+    fetchDeployment();
+  }, [fetchDeployment]);
 
   if (loading) {
     return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
-        <p className="text-center text-muted-foreground">
-          Loading deployment details...
-        </p>
+      <div
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+        aria-live="polite"
+      >
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-muted rounded w-64" />
+          <div className="grid lg:grid-cols-2 gap-8">
+            <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+              <div className="h-5 bg-muted rounded w-32 mb-4" />
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded w-48" />
+                <div className="h-4 bg-muted rounded w-36" />
+                <div className="h-4 bg-muted rounded w-40" />
+              </div>
+            </div>
+            <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+              <div className="h-5 bg-muted rounded w-32 mb-4" />
+              <div className="space-y-3">
+                <div className="h-4 bg-muted rounded w-48" />
+                <div className="h-4 bg-muted rounded w-36" />
+                <div className="h-4 bg-muted rounded w-40" />
+              </div>
+            </div>
+          </div>
+          <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+            <div className="h-5 bg-muted rounded w-32 mb-4" />
+            <div className="h-4 bg-muted rounded w-64" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 min-h-screen flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-3xl font-bold mb-4">Failed to load deployment</h1>
+          <p className="text-muted-foreground mb-6">
+            Something went wrong while fetching this deployment.
+          </p>
+          <div className="flex gap-4 justify-center">
+            <Button onClick={fetchDeployment} className="cursor-pointer">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+            <Link to="/dashboard">
+              <Button variant="outline" className="cursor-pointer">
+                Back to Dashboard
+              </Button>
+            </Link>
+          </div>
+        </motion.div>
       </div>
     );
   }
@@ -77,26 +137,6 @@ export function DepinDeployment() {
           </p>
           <Link to="/dashboard">
             <Button className="cursor-pointer">Back to Dashboard</Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
-  if (!wallet || !localStorage.getItem("token")) {
-    return (
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20 min-h-screen flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold mb-4">Please Sign In</h1>
-          <p className="text-muted-foreground mb-6">
-            Connect your wallet and sign in to view your deployment.
-          </p>
-          <Link to="/signin">
-            <Button className="cursor-pointer">Sign In</Button>
           </Link>
         </motion.div>
       </div>

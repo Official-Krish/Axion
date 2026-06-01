@@ -109,7 +109,7 @@ export function SiteFooter({
                 <IconBrandX className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
               </a>
               <a
-                href="#"
+                href="https://discord.gg/axion"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Discord"

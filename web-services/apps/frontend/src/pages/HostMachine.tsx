@@ -5,7 +5,6 @@ import { Step1, type Step1FormData } from "@/components/DepinHosting/Step1";
 import { Step2 } from "@/components/DepinHosting/Step2";
 import { Step3 } from "@/components/DepinHosting/Step3";
 import { api } from "@/lib/api";
-import { Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { IconCheck, IconCoins, IconTrendingUp } from "@tabler/icons-react";
 
@@ -261,31 +260,6 @@ export function HostRegister() {
     }
     setIsLoading(false);
   };
-
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#080810" }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-white/40 text-sm mb-4">
-            Connect your wallet to register a machine
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-white hover:text-[#6366F1] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
 
   return (
     <div

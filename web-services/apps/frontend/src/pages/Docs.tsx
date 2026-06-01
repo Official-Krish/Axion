@@ -296,6 +296,7 @@ export default function Docs() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search…"
+            aria-label="Search"
             className="bg-transparent text-xs text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 focus:outline-none flex-1 w-full"
           />
           {!search && (
@@ -392,6 +393,7 @@ export default function Docs() {
                         <button
                           onClick={() => setActive(prev.id)}
                           className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                          aria-label={`Previous: ${prev.label}`}
                         >
                           ← {prev.label}
                         </button>
@@ -402,6 +404,7 @@ export default function Docs() {
                         <button
                           onClick={() => setActive(next.id)}
                           className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                          aria-label={`Next: ${next.label}`}
                         >
                           {next.label} →
                         </button>

@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useParams, Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { RefreshCw, AlertCircle } from "lucide-react";
 import { api } from "@/lib/api";
 import { type Machine } from "../../types/depinMachines";
 
@@ -33,35 +34,25 @@ export function HostMachineDetails() {
   const wallet = useWallet();
   const [machine, setMachine] = useState<Machine | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    if (!wallet.publicKey) return;
-    api
-      .get(`/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`)
-      .then((r) => setMachine(r.data.find((m: Machine) => m.id === id) ?? null))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+  const fetchMachine = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const r = await api.get(
+        `/user/depin/getAll?userPublicKey=${wallet.publicKey!.toBase58()}`,
+      );
+      setMachine(r.data.find((m: Machine) => m.id === id) ?? null);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
   }, [wallet.publicKey, id]);
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 text-sm mb-4">Sign in to view machine</p>
-          <Link
-            to="/signin"
-            className="text-sm hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchMachine();
+  }, [fetchMachine]);
 
   if (loading) {
     return (
@@ -71,6 +62,30 @@ export function HostMachineDetails() {
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
           className="w-5 h-5 border border-zinc-300 dark:border-zinc-700 border-t-zinc-900 dark:border-t-white rounded-full"
         />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center mt-16">
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center"
+        >
+          <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+          <p className="text-zinc-500 text-sm mb-4">
+            Failed to load machine details.
+          </p>
+          <button
+            onClick={fetchMachine}
+            className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-emerald-500 transition-colors flex items-center gap-1 justify-center mx-auto"
+          >
+            <RefreshCw className="h-3 w-3" />
+            Retry
+          </button>
+        </motion.div>
       </div>
     );
   }

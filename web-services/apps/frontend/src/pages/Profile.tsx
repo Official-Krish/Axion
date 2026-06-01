@@ -1,40 +1,49 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { Link } from "react-router-dom";
+
+import { api } from "@/lib/api";
+import { Input } from "@/components/ui/input";
+import { showSuccess, showError } from "@/lib/toast";
 import { toast } from "sonner";
 
 function Row({
   label,
   value,
   mono = false,
+  children,
 }: {
   label: string;
-  value: string;
+  value?: string;
   mono?: boolean;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="flex items-center justify-between py-4 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
       <span className="text-xs tracking-[0.12em] uppercase text-zinc-400 dark:text-zinc-600">
         {label}
       </span>
-      <span
-        className={`text-sm text-zinc-700 dark:text-zinc-300 ${mono ? "font-mono text-xs" : ""}`}
-      >
-        {value}
-      </span>
+      {children ?? (
+        <span
+          className={`text-sm text-zinc-700 dark:text-zinc-300 ${mono ? "font-mono text-xs" : ""}`}
+        >
+          {value}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex items-center justify-between py-4 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
+      <div className="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+      <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
     </div>
   );
 }
 
 const SECTIONS = [
-  {
-    label: "Identity",
-    rows: (pk: string, email: string) => [
-      { label: "Wallet", value: pk, mono: true },
-      { label: "Email", value: email || "—" },
-      { label: "Network", value: "Solana Devnet" },
-    ],
-  },
   {
     label: "Security",
     rows: () => [
@@ -58,31 +67,49 @@ const SECTIONS = [
 
 export default function Profile() {
   const { publicKey } = useWallet();
+  const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "" });
+  const [saving, setSaving] = useState(false);
 
-  if (!publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Sign in to access settings
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    api
+      .get("/user/profile")
+      .then((res) => {
+        const d = res.data?.data ?? res.data;
+        setFormData({
+          name: d.name ?? "",
+          email: d.email ?? localStorage.getItem("email") ?? "",
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [publicKey]);
 
-  const pk = publicKey.toBase58();
-  const email = localStorage.getItem("email") ?? "";
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await api.put("/user/profile", formData);
+      localStorage.setItem("email", formData.email);
+      showSuccess("Profile updated");
+      setIsEditing(false);
+    } catch {
+      showError("Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setFormData({
+      name: "",
+      email: localStorage.getItem("email") ?? "",
+    });
+    setIsEditing(false);
+  };
+
+  const pk = publicKey!.toBase58();
+  const email = formData.email ?? localStorage.getItem("email") ?? "";
 
   return (
     <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
@@ -124,18 +151,106 @@ export default function Profile() {
 
         {/* sections */}
         <div className="space-y-12">
+          {/* Identity — manually rendered for edit support */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2, duration: 0.6 }}
+          >
+            <div className="flex items-center justify-between mb-1">
+              <span className="text-[10px] tracking-[0.22em] uppercase text-zinc-400 dark:text-zinc-600">
+                Identity
+              </span>
+              {!loading && !isEditing && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="text-[11px] tracking-wider uppercase text-[#9945FF] hover:text-[#7c3aed] transition-colors"
+                >
+                  Edit
+                </button>
+              )}
+            </div>
+            <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
+              {loading ? (
+                <>
+                  <SkeletonRow />
+                  <SkeletonRow />
+                  <SkeletonRow />
+                </>
+              ) : (
+                <>
+                  <Row label="Wallet" value={pk} mono />
+                  {isEditing ? (
+                    <>
+                      <Row label="Name">
+                        <Input
+                          value={formData.name}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
+                          className="h-8 w-48 text-sm text-right"
+                          placeholder="Your name"
+                        />
+                      </Row>
+                      <Row label="Email">
+                        <Input
+                          value={formData.email}
+                          onChange={(e) =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              email: e.target.value,
+                            }))
+                          }
+                          className="h-8 w-48 text-sm text-right"
+                          placeholder="your@email.com"
+                        />
+                      </Row>
+                    </>
+                  ) : (
+                    <>
+                      <Row label="Name" value={formData.name || "—"} />
+                      <Row label="Email" value={email || "—"} />
+                    </>
+                  )}
+                  <Row label="Network" value="Solana Devnet" />
+                  {isEditing && (
+                    <div className="flex items-center justify-end gap-3 pt-4 pb-2">
+                      <button
+                        onClick={handleCancel}
+                        disabled={saving}
+                        className="text-xs tracking-wider uppercase text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300 transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="text-xs tracking-wider uppercase text-[#9945FF] hover:text-[#7c3aed] transition-colors disabled:opacity-50"
+                      >
+                        {saving ? "Saving…" : "Save"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          </motion.div>
+
           {SECTIONS.map((section, i) => (
             <motion.div
               key={section.label}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 + i * 0.12, duration: 0.6 }}
+              transition={{ delay: 0.2 + (i + 1) * 0.12, duration: 0.6 }}
             >
               <span className="text-[10px] tracking-[0.22em] uppercase text-zinc-400 dark:text-zinc-600 block mb-1">
                 {section.label}
               </span>
               <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
-                {section.rows(pk, email).map((r) => (
+                {section.rows().map((r) => (
                   <Row key={r.label} {...r} />
                 ))}
               </div>

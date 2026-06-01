@@ -14,14 +14,10 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useTheme } from "@/components/themeProvider";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useNavigate } from "react-router-dom";
 import "@xterm/xterm/css/xterm.css";
 import { WS_RELAYER_URL } from "@/config";
 
 const SSHTerminal = () => {
-  const wallet = useWallet();
-  const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [token, setToken] = useState("");
@@ -321,11 +317,6 @@ const SSHTerminal = () => {
     }
     window.close();
   }, []);
-
-  if (!wallet.connected || !localStorage.getItem("token")) {
-    navigate("/signin");
-    return null;
-  }
 
   if (!isAuthenticated) {
     return (
