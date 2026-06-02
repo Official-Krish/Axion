@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: axion-frontend
-          image: krishanand01/axion-frontend:v1.0.1
+          image: krishanand01/axion-frontend:v1.0.2
           ports:
             - containerPort: 80
           volumeMounts:
@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
         - name: axion-backend
-          image: krishanand01/axion-backend:v1.0
+          image: krishanand01/axion-backend:v1.0.1
           ports:
             - containerPort: 3000
           volumeMounts:
@@ -117,7 +117,7 @@ spec:
     spec:
       containers:
         - name: axion-worker
-          image: krishanand01/axion-worker:v1.0.2
+          image: krishanand01/axion-worker:v1.0.3
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/worker/.env
@@ -152,7 +152,7 @@ spec:
     spec:
       containers:
         - name: axion-ws-relayer
-          image: krishanand01/axion-ws-relayer:v1.0
+          image: krishanand01/axion-ws-relayer:v1.0.1
           ports:
             - containerPort: 9093
           volumeMounts:
