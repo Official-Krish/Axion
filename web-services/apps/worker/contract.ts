@@ -6,11 +6,24 @@ import {
   Transaction,
 } from "@solana/web3.js";
 import { AnchorProvider, Program, type Idl } from "@coral-xyz/anchor";
-import idl from "./idl/contract.json";
+import { existsSync, readFileSync } from "node:fs";
 import bs58 from "bs58";
 import BN from "bn.js";
+import fallbackIdl from "./contractIdl";
 
 const connection = new Connection(clusterApiUrl("devnet"));
+
+function loadIdl(): Idl {
+  const idlPath = new URL("./idl/contract.json", import.meta.url);
+
+  if (existsSync(idlPath)) {
+    return JSON.parse(readFileSync(idlPath, "utf8")) as Idl;
+  }
+
+  return fallbackIdl;
+}
+
+const idl = loadIdl();
 
 const VAULT_SEED = "axion_vault";
 
