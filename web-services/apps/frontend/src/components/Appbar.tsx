@@ -12,6 +12,7 @@ import ProfileDropdown from "./user-dropdown";
 import { AnimatedThemeToggler } from "./ui/animated-theme-toggler";
 import { AxionLogo } from "./AxionLogo";
 import { Menu, X } from "lucide-react";
+import { WSConnectionDot } from "./WSConnectionDot";
 
 export const Appbar = () => {
   const { wallet } = useWallet();
@@ -124,6 +125,7 @@ export const Appbar = () => {
 
           {/* CTA / Wallet */}
           <div className="flex items-center gap-2 shrink-0">
+            <WSConnectionDot />
             <AnimatedThemeToggler />
             {localStorage.getItem("token") && wallet?.adapter.connected ? (
               <button

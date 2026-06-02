@@ -162,8 +162,9 @@ export function VMDetails() {
   }
 
   return (
-    <div
+    <motion.div
       aria-live="polite"
+      layoutId={`vm-card-${id}`}
       className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
     >
       <Header vm={vm} />
@@ -178,6 +179,6 @@ export function VMDetails() {
 
         <Sidebar vm={vm} />
       </div>
-    </div>
+    </motion.div>
   );
 }

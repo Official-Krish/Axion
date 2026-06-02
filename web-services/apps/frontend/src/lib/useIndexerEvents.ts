@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { WS_RELAYER_URL } from "@/config";
 
 export interface IndexerEvent {
@@ -12,12 +12,50 @@ export interface IndexerEvent {
 
 type EventHandler = (event: IndexerEvent) => void;
 
+export type WSConnectionState = "disconnected" | "connecting" | "connected";
+
 // ── Singleton WS state ────────────────────────────────────────────────
 let globalWs: WebSocket | null = null;
 const listeners = new Set<EventHandler>();
-// All pubkeys that have been requested — re-subscribed on every (re)connect
 const subscribedPubkeys = new Set<string>();
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let reconnectAttempt = 0;
+
+// ── Connection state tracking ─────────────────────────────────────────
+let _connectionState: WSConnectionState = "disconnected";
+const stateListeners = new Set<() => void>();
+
+function getConnectionState(): WSConnectionState {
+  return _connectionState;
+}
+
+function setConnectionState(state: WSConnectionState) {
+  _connectionState = state;
+  stateListeners.forEach((fn) => fn());
+}
+
+function subscribeToState(cb: () => void) {
+  stateListeners.add(cb);
+  return () => stateListeners.delete(cb);
+}
+
+export function useWSConnectionStatus(): WSConnectionState {
+  return useSyncExternalStore(subscribeToState, getConnectionState);
+}
+
+// ── Backoff ───────────────────────────────────────────────────────────
+const BACKOFF_BASE = 1000;
+const BACKOFF_MAX = 30000;
+
+function scheduleReconnect() {
+  const delay = Math.min(
+    BACKOFF_BASE * Math.pow(2, reconnectAttempt),
+    BACKOFF_MAX,
+  );
+  reconnectAttempt++;
+  if (reconnectTimer) clearTimeout(reconnectTimer);
+  reconnectTimer = setTimeout(connect, delay);
+}
 
 function sendSubscribe(pubkey: string) {
   if (globalWs?.readyState === WebSocket.OPEN) {
@@ -26,17 +64,16 @@ function sendSubscribe(pubkey: string) {
 }
 
 function connect() {
-  if (globalWs?.readyState === WebSocket.OPEN) {
-    return;
-  }
-  // If CONNECTING but we have pubkeys waiting, let it finish — onopen will subscribe them
-  if (globalWs?.readyState === WebSocket.CONNECTING) {
-    return;
-  }
+  if (globalWs?.readyState === WebSocket.OPEN) return;
+  if (globalWs?.readyState === WebSocket.CONNECTING) return;
+
+  setConnectionState("connecting");
 
   globalWs = new WebSocket(WS_RELAYER_URL);
 
   globalWs.onopen = () => {
+    reconnectAttempt = 0;
+    setConnectionState("connected");
     for (const pk of subscribedPubkeys) sendSubscribe(pk);
   };
 
@@ -50,18 +87,16 @@ function connect() {
       }
     } catch {
       console.error("[ws-indexer] failed to parse message:", msg.data);
-      // ignore malformed
     }
   };
 
   globalWs.onclose = () => {
     globalWs = null;
-    if (reconnectTimer) clearTimeout(reconnectTimer);
-    reconnectTimer = setTimeout(connect, 3000);
+    setConnectionState("disconnected");
+    scheduleReconnect();
   };
 
-  globalWs.onerror = (e) => {
-    console.error("[ws-indexer] error:", e);
+  globalWs.onerror = () => {
     globalWs?.close();
   };
 }
