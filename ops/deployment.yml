@@ -7,6 +7,11 @@ metadata:
     app: axion-frontend
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-frontend
@@ -20,6 +25,13 @@ spec:
           image: krishanand01/axion-frontend:v1.0.2
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /etc/axion/frontend.env
@@ -38,6 +50,11 @@ metadata:
     app: axion-backend
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-backend
@@ -51,6 +68,13 @@ spec:
           image: krishanand01/axion-backend:v1.0.1
           ports:
             - containerPort: 3000
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/backend/.env
@@ -77,6 +101,11 @@ metadata:
     app: axion-indexer
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-indexer
@@ -88,6 +117,13 @@ spec:
       containers:
         - name: axion-indexer
           image: krishanand01/axion-indexer:v1.0
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/indexer/.env
@@ -107,6 +143,11 @@ metadata:
     app: axion-worker
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-worker
@@ -118,6 +159,13 @@ spec:
       containers:
         - name: axion-worker
           image: krishanand01/axion-worker:v1.0.3
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/worker/.env
@@ -142,6 +190,11 @@ metadata:
     app: axion-ws-relayer
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-ws-relayer
@@ -155,6 +208,13 @@ spec:
           image: krishanand01/axion-ws-relayer:v1.0.1
           ports:
             - containerPort: 9093
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /app/.env
@@ -174,6 +234,11 @@ metadata:
     app: axion-depin-ws-relayer
 spec:
   replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
   selector:
     matchLabels:
       app: axion-depin-ws-relayer
@@ -187,6 +252,13 @@ spec:
           image: krishanand01/axion-depin-ws-relayer:v1.0
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: "5m"
+              memory: "32Mi"
+            limits:
+              cpu: "100m"
+              memory: "512Mi"
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/depin-ws-relayer/.env
