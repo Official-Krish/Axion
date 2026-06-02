@@ -1,5 +1,10 @@
 /// <reference types="vite/client" />
 
+declare module "*.json" {
+  const value: unknown;
+  export default value;
+}
+
 interface Window {
   __AXION_ENV__?: {
     VITE_BACKEND_URL?: string;

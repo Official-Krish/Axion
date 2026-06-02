@@ -1,17 +1,24 @@
-import { Connection, LAMPORTS_PER_SOL, PublicKey } from "@solana/web3.js";
-import { AnchorProvider, Program, type Idl } from "@coral-xyz/anchor";
-import idl from "../../idl/contract.json";
+import { AnchorProvider, Program, type Idl, web3 } from "@coral-xyz/anchor";
 import { type AnchorWallet } from "@solana/wallet-adapter-react";
 import { BN } from "bn.js";
 import { getAdminPublicKey, SOLANA_RPC_URL } from "@/config";
+import { idl as fallbackIdl } from "../contractidl";
+
+const generatedIdlModules = import.meta.glob("../../idl/contract.json", {
+  eager: true,
+  import: "default",
+});
+const idl = (generatedIdlModules["../../idl/contract.json"] ??
+  fallbackIdl) as Idl;
 
 const VAULT_SEED = "axion_vault";
+const { Connection, LAMPORTS_PER_SOL, PublicKey } = web3;
 
 export function getContract(wallet: AnchorWallet): Program {
   if (!wallet) throw new Error("Wallet not connected");
   const connection = new Connection(SOLANA_RPC_URL);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const provider = new AnchorProvider(connection, wallet as any, {});
+  const provider = new AnchorProvider(connection as any, wallet as any, {});
   return new Program(idl as Idl, provider);
 }
 

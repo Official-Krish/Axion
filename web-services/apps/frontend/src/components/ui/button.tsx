@@ -45,10 +45,9 @@ function Button({
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean;
   }) {
-  const Comp = asChild ? Slot : "button";
+  const Comp: React.ElementType = asChild ? Slot : "button";
 
   return (
-    // @ts-expect-error Slot component has incompatible props with button
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
