@@ -17,6 +17,7 @@ import { TransferToVaultAndStartRental } from "@/lib/contract";
 
 import { Step2 } from "@/components/RentVm/Step2";
 import { StartRentalSessionWithEscrow } from "@/lib/Escrow";
+import { Skeleton } from "@/components/Skeleton";
 import { usePaymentConfirmation } from "@/lib/useIndexerEvents";
 
 export const RentVM = () => {
@@ -282,7 +283,8 @@ export const RentVM = () => {
             <motion.div
               key={step.number}
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: index * 0.1 }}
               className="flex items-center space-x-4"
             >
@@ -318,95 +320,113 @@ export const RentVM = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Step 1: Configuration */}
-          {currentStep === 1 &&
-            (timedOut && !error ? (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">
-                  Loading is taking longer than expected. Please try again.
-                </p>
-                <Button onClick={fetchVMConfigs} className="mt-4">
-                  Retry
-                </Button>
-              </div>
-            ) : loading ? (
-              <div className="space-y-6">
-                <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
-                  <div className="h-5 bg-muted rounded w-36 mb-4" />
-                  <div className="h-10 bg-muted rounded w-full" />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 1 &&
+              (timedOut && !error ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Loading is taking longer than expected. Please try again.
+                  </p>
+                  <Button onClick={fetchVMConfigs} className="mt-4">
+                    Retry
+                  </Button>
                 </div>
-                <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
-                  <div className="h-5 bg-muted rounded w-48 mb-2" />
-                  <div className="h-4 bg-muted rounded w-64 mb-4" />
-                  <div className="space-y-3">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="h-16 bg-muted rounded-lg" />
-                    ))}
+              ) : loading ? (
+                <div className="space-y-6">
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                    <Skeleton className="h-5 w-36 mb-4" />
+                    <Skeleton className="h-10 w-full" />
                   </div>
-                </div>
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
-                    <div className="h-5 bg-muted rounded w-24 mb-4" />
-                    <div className="h-10 bg-muted rounded w-full" />
-                  </div>
-                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
-                    <div className="h-5 bg-muted rounded w-36 mb-4" />
-                    <div className="grid grid-cols-2 gap-3">
-                      {[...Array(4)].map((_, i) => (
-                        <div key={i} className="h-16 bg-muted rounded-lg" />
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                    <Skeleton className="h-5 w-48 mb-2" />
+                    <Skeleton className="h-4 w-64 mb-4" />
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <Skeleton key={i} className="h-16" />
                       ))}
                     </div>
                   </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                      <Skeleton className="h-5 w-24 mb-4" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                      <Skeleton className="h-5 w-36 mb-4" />
+                      <div className="grid grid-cols-2 gap-3">
+                        {[...Array(4)].map((_, i) => (
+                          <Skeleton key={i} className="h-16" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <Step1
-                vms={vms}
-                vmName={vmName}
-                setVmName={setVmName}
-                diskSize={diskSize}
-                setDiskSize={setDiskSize}
-                region={region}
-                setRegion={setRegion}
-                os={os}
-                setOs={setOs}
-                isNameAvailable={isNameAvailable}
-                selectedVMConfig={selectedVMConfig || null}
-                setSelectedVMConfig={(config) =>
-                  setSelectedConfig(config?.id || "")
-                }
-                setStep={setCurrentStep}
-                selectedConfig={selectedConfig}
-                setSelectedConfig={setSelectedConfig}
-              />
-            ))}
+              ) : (
+                <Step1
+                  vms={vms}
+                  vmName={vmName}
+                  setVmName={setVmName}
+                  diskSize={diskSize}
+                  setDiskSize={setDiskSize}
+                  region={region}
+                  setRegion={setRegion}
+                  os={os}
+                  setOs={setOs}
+                  isNameAvailable={isNameAvailable}
+                  selectedVMConfig={selectedVMConfig || null}
+                  setSelectedVMConfig={(config) =>
+                    setSelectedConfig(config?.id || "")
+                  }
+                  setStep={setCurrentStep}
+                  selectedConfig={selectedConfig}
+                  setSelectedConfig={setSelectedConfig}
+                />
+              ))}
+          </motion.div>
 
           {/* Step 2: Payment Method */}
-          {currentStep === 2 && (
-            <Step2
-              selectedVMConfig={selectedVMConfig || null}
-              duration={duration}
-              paymentType={paymentType}
-              setDuration={setDuration}
-              setPaymentType={setPaymentType}
-              setEscrowAmount={setEscrowAmount}
-              escrowAmount={escrowAmount}
-              diskSize={diskSize}
-            />
-          )}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 2 && (
+              <Step2
+                selectedVMConfig={selectedVMConfig || null}
+                duration={duration}
+                paymentType={paymentType}
+                setDuration={setDuration}
+                setPaymentType={setPaymentType}
+                setEscrowAmount={setEscrowAmount}
+                escrowAmount={escrowAmount}
+                diskSize={diskSize}
+              />
+            )}
+          </motion.div>
 
-          {/* Step 2: Review */}
-          {currentStep === 3 && (
-            <Step3
-              vmName={vmName}
-              selectedVMConfig={selectedVMConfig || null}
-              diskSize={diskSize}
-              region={region}
-              os={os}
-              duration={duration}
-              paymentType={paymentType}
-              escrowAmount={escrowAmount}
-            />
-          )}
+          {/* Step 3: Review & Deploy */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 3 && (
+              <Step3
+                vmName={vmName}
+                selectedVMConfig={selectedVMConfig || null}
+                diskSize={diskSize}
+                region={region}
+                os={os}
+                duration={duration}
+                paymentType={paymentType}
+                escrowAmount={escrowAmount}
+              />
+            )}
+          </motion.div>
 
           {Object.keys(errors).length > 0 && (
             <div className="space-y-1 mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">

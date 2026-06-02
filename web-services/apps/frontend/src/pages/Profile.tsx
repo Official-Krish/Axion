@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { BackgroundGlow } from "@/components/BackgroundGlow";
+import { Check } from "lucide-react";
 
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,7 @@ import { showSuccess, showError } from "@/lib/toast";
 import { toast } from "sonner";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/Skeleton";
 
 function Row({
   label,
@@ -40,8 +42,8 @@ function Row({
 function SkeletonRow() {
   return (
     <div className="flex items-center justify-between py-4 border-b border-black/[0.04] dark:border-white/[0.04] last:border-0">
-      <div className="h-3 w-16 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
-      <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded animate-pulse" />
+      <Skeleton className="h-3 w-16" />
+      <Skeleton className="h-4 w-32" />
     </div>
   );
 }
@@ -76,6 +78,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [saving, setSaving] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
   const fetchProfile = async () => {
     setLoading(true);
@@ -104,6 +107,8 @@ export default function Profile() {
       await api.put("/user/profile", formData);
       localStorage.setItem("email", formData.email);
       showSuccess("Profile updated");
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 2000);
       setIsEditing(false);
     } catch {
       showError("Failed to update profile");
@@ -168,6 +173,8 @@ export default function Profile() {
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
             transition={{ delay: 0.2, duration: 0.6 }}
           >
             <div className="flex items-center justify-between mb-1">
@@ -252,7 +259,13 @@ export default function Profile() {
                         disabled={saving}
                         className="text-xs tracking-wider uppercase text-[#9945FF] hover:text-[#7c3aed] transition-colors disabled:opacity-50"
                       >
-                        {saving ? "Saving…" : "Save"}
+                        {saveSuccess ? (
+                          <Check className="w-4 h-4" />
+                        ) : saving ? (
+                          "Saving…"
+                        ) : (
+                          "Save"
+                        )}
                       </button>
                     </div>
                   )}
@@ -266,6 +279,8 @@ export default function Profile() {
               key={section.label}
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: 0.2 + (i + 1) * 0.12, duration: 0.6 }}
             >
               <span className="text-[10px] tracking-[0.22em] uppercase text-zinc-400 dark:text-zinc-600 block mb-1">
@@ -284,6 +299,8 @@ export default function Profile() {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, margin: "-50px" }}
           transition={{ delay: 0.7 }}
           className="mt-16 pt-8 border-t border-black/[0.06] dark:border-white/[0.06]"
         >

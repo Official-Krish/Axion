@@ -104,6 +104,7 @@ export function SiteFooter({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="X (Twitter)"
+                title="X (Twitter)"
                 className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
               >
                 <IconBrandX className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
@@ -113,6 +114,7 @@ export function SiteFooter({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Discord"
+                title="Discord"
                 className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
               >
                 <IconBrandDiscord className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />
@@ -122,6 +124,7 @@ export function SiteFooter({
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="GitHub"
+                title="GitHub"
                 className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.06)] border border-[rgba(255,255,255,0.12)] flex items-center justify-center hover:border-[rgba(255,255,255,0.3)] hover:bg-[rgba(255,255,255,0.1)] transition-all duration-120"
               >
                 <IconBrandGithub className="w-3.5 h-3.5 text-[rgba(255,255,255,0.5)]" />

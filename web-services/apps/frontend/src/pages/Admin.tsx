@@ -31,6 +31,7 @@ import {
   Server,
   AlertCircle,
   CheckCircle,
+  Check,
   Clock,
   ChevronLeft,
   ChevronRight,
@@ -50,6 +51,7 @@ import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { api } from "@/lib/api";
 import { ADMIN_KEY } from "@/config";
 import { formatter } from "@/lib/FormatTime";
+import { Skeleton } from "@/components/Skeleton";
 import { useIndexerEvents, type IndexerEvent } from "@/lib/useIndexerEvents";
 import { clusterApiUrl, Connection } from "@solana/web3.js";
 
@@ -122,6 +124,7 @@ export function AdminPage() {
 
   // Per-operation states
   const [initOp, setInitOp] = useState<OpState>(IDLE);
+  const [initSuccess, setInitSuccess] = useState(false);
   const [fundOp, setFundOp] = useState<OpState>(IDLE);
   const [withdrawOp, setWithdrawOp] = useState<OpState>(IDLE);
   const [balanceOp, setBalanceOp] = useState<OpState>(IDLE);
@@ -282,6 +285,8 @@ export function AdminPage() {
     watchTx(res.signature, setInitOp, "Vault initialized successfully", () => {
       setVaultBalance(0);
       setVaultExists(true);
+      setInitSuccess(true);
+      setTimeout(() => setInitSuccess(false), 2000);
     });
   };
 
@@ -499,6 +504,8 @@ export function AdminPage() {
                       >
                         {vaultExists ? (
                           "Vault Initialized ✓"
+                        ) : initSuccess ? (
+                          <Check className="w-4 h-4" />
                         ) : busy(initOp) ? (
                           <>
                             <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -671,8 +678,8 @@ export function AdminPage() {
                 ) : loadingVms ? (
                   <Card>
                     <CardHeader>
-                      <div className="h-6 bg-muted rounded w-64 animate-pulse" />
-                      <div className="h-4 bg-muted rounded w-48 animate-pulse mt-2" />
+                      <Skeleton className="h-6 w-64" />
+                      <Skeleton className="h-4 w-48 mt-2" />
                     </CardHeader>
                     <CardContent>
                       <div className="border rounded-lg overflow-hidden">
@@ -681,7 +688,7 @@ export function AdminPage() {
                             <TableRow>
                               {[...Array(10)].map((_, i) => (
                                 <TableHead key={i}>
-                                  <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                                  <Skeleton className="h-4 w-16" />
                                 </TableHead>
                               ))}
                             </TableRow>
@@ -691,7 +698,7 @@ export function AdminPage() {
                               <TableRow key={row}>
                                 {[...Array(10)].map((_, cell) => (
                                   <TableCell key={cell}>
-                                    <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                                    <Skeleton className="h-4 w-full" />
                                   </TableCell>
                                 ))}
                               </TableRow>

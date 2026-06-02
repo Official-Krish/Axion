@@ -14,14 +14,15 @@ import { BillingStatus } from "@/components/vmDetail/BillingStatus";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { toast } from "sonner";
 import { RefreshCw, AlertCircle, ArrowLeft } from "lucide-react";
+import { Skeleton } from "@/components/Skeleton";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 function SkeletonBlock() {
   return (
-    <div className="animate-pulse space-y-3">
-      <div className="h-4 bg-muted rounded w-1/3" />
-      <div className="h-4 bg-muted rounded w-2/3" />
-      <div className="h-4 bg-muted rounded w-1/2" />
+    <div className="space-y-3">
+      <Skeleton className="h-4 w-1/3" />
+      <Skeleton className="h-4 w-2/3" />
+      <Skeleton className="h-4 w-1/2" />
     </div>
   );
 }

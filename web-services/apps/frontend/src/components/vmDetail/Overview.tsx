@@ -56,6 +56,7 @@ export const Overview = ({ vm }: { vm: VM }) => {
                     size="sm"
                     onClick={() => copyToClipboard(vm.ipAddress)}
                     className="h-6 w-6 p-0 cursor-pointer"
+                    title="Copy IP address"
                     aria-label="Copy IP address"
                   >
                     <Copy className="h-3 w-3" />
@@ -81,6 +82,7 @@ export const Overview = ({ vm }: { vm: VM }) => {
                     size="sm"
                     onClick={() => copyToClipboard(vm.VMImage?.applicationUrl)}
                     className="h-6 w-6 p-0 cursor-pointer"
+                    title="Copy application URL"
                     aria-label="Copy application URL"
                   >
                     <Copy className="h-3 w-3" />

@@ -8,6 +8,7 @@ import { RefreshCw, AlertCircle } from "lucide-react";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { toast } from "sonner";
 import { type VM } from "../../types/vm";
+import { Skeleton } from "@/components/Skeleton";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { DepinHeader } from "@/components/DepinDeployment/Header";
 import { DeploymentInfo } from "@/components/DepinDeployment/DeploymentInfo";
@@ -85,29 +86,29 @@ export function DepinDeployment() {
         className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
         aria-live="polite"
       >
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-muted rounded w-64" />
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
           <div className="grid lg:grid-cols-2 gap-8">
             <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
-              <div className="h-5 bg-muted rounded w-32 mb-4" />
+              <Skeleton className="h-5 w-32 mb-4" />
               <div className="space-y-3">
-                <div className="h-4 bg-muted rounded w-48" />
-                <div className="h-4 bg-muted rounded w-36" />
-                <div className="h-4 bg-muted rounded w-40" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-40" />
               </div>
             </div>
             <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
-              <div className="h-5 bg-muted rounded w-32 mb-4" />
+              <Skeleton className="h-5 w-32 mb-4" />
               <div className="space-y-3">
-                <div className="h-4 bg-muted rounded w-48" />
-                <div className="h-4 bg-muted rounded w-36" />
-                <div className="h-4 bg-muted rounded w-40" />
+                <Skeleton className="h-4 w-48" />
+                <Skeleton className="h-4 w-36" />
+                <Skeleton className="h-4 w-40" />
               </div>
             </div>
           </div>
           <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
-            <div className="h-5 bg-muted rounded w-32 mb-4" />
-            <div className="h-4 bg-muted rounded w-64" />
+            <Skeleton className="h-5 w-32 mb-4" />
+            <Skeleton className="h-4 w-64" />
           </div>
         </div>
       </div>

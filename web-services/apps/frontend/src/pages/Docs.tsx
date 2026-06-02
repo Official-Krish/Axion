@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BackgroundGlow } from "@/components/BackgroundGlow";
+import { ReadingProgress } from "@/components/ReadingProgress";
 import { Link } from "react-router-dom";
 
 const NAV = [
@@ -247,6 +248,7 @@ export default function Docs() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col pt-16">
+      <ReadingProgress />
       <BackgroundGlow
         color="rgba(153,69,255,0.05)"
         size="40% 30%"

@@ -5,7 +5,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Container, Cpu, HardDrive } from "lucide-react";
+import { Container, Cpu, HardDrive, Check } from "lucide-react";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
@@ -53,6 +53,7 @@ interface FormProps {
 
 export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
   const [isSearching, setIsSearching] = useState(false);
+  const [searchSuccess, setSearchSuccess] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validate = () => {
@@ -102,6 +103,8 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
       });
       if (res.status === 200) {
         toast.success("VM found successfully!");
+        setSearchSuccess(true);
+        await new Promise((r) => setTimeout(r, 800));
         setVm(res.data.vm);
         setStep(1);
       } else {
@@ -151,6 +154,7 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                     setErrors((prev) => ({ ...prev, appName: "" }));
                   }}
                   required
+                  className={errors.appName ? "animate-shake" : ""}
                 />
                 {errors.appName && (
                   <p className="text-sm text-red-500 mt-1">{errors.appName}</p>
@@ -170,6 +174,7 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                     setErrors((prev) => ({ ...prev, dockerImage: "" }));
                   }}
                   required
+                  className={errors.dockerImage ? "animate-shake" : ""}
                 />
                 {errors.dockerImage && (
                   <p className="text-sm text-red-500 mt-1">
@@ -284,6 +289,7 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
                     }}
                     min="1"
                     max="1000"
+                    className={errors.diskSize ? "animate-shake" : ""}
                   />
                   {errors.diskSize && (
                     <p className="text-sm text-red-500 mt-1">
@@ -329,9 +335,14 @@ export const Form = ({ formData, setFormData, setVm, setStep }: FormProps) => {
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
               size="lg"
               onClick={handleSubmit}
-              disabled={isSearching}
+              disabled={isSearching || searchSuccess}
             >
-              {isSearching ? (
+              {searchSuccess ? (
+                <span className="flex items-center gap-2">
+                  <Check className="h-4 w-4" />
+                  Found!
+                </span>
+              ) : isSearching ? (
                 <span className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
                   Searching...

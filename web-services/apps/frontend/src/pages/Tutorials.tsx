@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import { motion, useInView } from "motion/react";
 import { BackgroundGlow } from "@/components/BackgroundGlow";
+import { ReadingProgress } from "@/components/ReadingProgress";
 import { Link } from "react-router-dom";
 
 const TUTORIALS = [
@@ -109,6 +110,7 @@ function TutRow({ t, i }: { t: (typeof TUTORIALS)[0]; i: number }) {
 export default function Tutorials() {
   return (
     <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <ReadingProgress />
       <BackgroundGlow
         color="rgba(153,69,255,0.06)"
         size="50% 30%"

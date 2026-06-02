@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { Input } from "@/components/ui/input";
@@ -19,24 +20,25 @@ import { formatter } from "@/lib/FormatTime";
 import { getVmDetails } from "@/lib/vm";
 import { toast } from "sonner";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
+import { Skeleton } from "@/components/Skeleton";
 
 function SkeletonCard() {
   return (
-    <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
+    <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
       <div className="flex items-center space-x-4 mb-3">
-        <div className="h-5 bg-muted rounded w-48" />
-        <div className="h-5 bg-muted rounded w-20" />
+        <Skeleton className="h-5 w-48" />
+        <Skeleton className="h-5 w-20" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[...Array(4)].map((_, i) => (
           <div key={i}>
-            <div className="h-4 bg-muted rounded w-24 mb-1" />
-            <div className="h-3 bg-muted rounded w-16" />
+            <Skeleton className="h-4 w-24 mb-1" />
+            <Skeleton className="h-3 w-16" />
           </div>
         ))}
       </div>
       <div className="mt-3 pt-3 border-t border-border/50">
-        <div className="h-3 bg-muted rounded w-64" />
+        <Skeleton className="h-3 w-64" />
       </div>
     </div>
   );
@@ -44,6 +46,7 @@ function SkeletonCard() {
 
 export function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
   const [filter, setFilter] = useState("all");
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +110,7 @@ export function Dashboard() {
   const filteredVMs = vms.filter((vm) => {
     const matchesSearch = vm.name
       .toLowerCase()
-      .includes(searchQuery.toLowerCase());
+      .includes(debouncedSearch.toLowerCase());
     const matchesFilter = filter === "all" || vm.status === filter;
     return matchesSearch && matchesFilter;
   });
@@ -118,8 +121,9 @@ export function Dashboard() {
       aria-live="polite"
     >
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
         className="flex flex-col sm:flex-row sm:items-center justify-between mb-8"
       >
         <div>
@@ -146,8 +150,9 @@ export function Dashboard() {
       </motion.div>
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-50px" }}
         transition={{ delay: 0.1 }}
         className="flex flex-col sm:flex-row gap-4 mb-8"
       >
@@ -220,8 +225,9 @@ export function Dashboard() {
             <motion.div
               key={vm.id}
               layout
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, margin: "-100px" }}
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: index * 0.1 }}
               className="group p-6 rounded-2xl border border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300"

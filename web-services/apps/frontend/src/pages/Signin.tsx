@@ -164,7 +164,7 @@ export function SignIn() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.email ? "animate-shake" : ""}`}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500 mt-1">{errors.email}</p>
@@ -185,7 +185,7 @@ export function SignIn() {
                   value={formData.password}
                   onChange={handleInputChange}
                   required
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.password ? "animate-shake" : ""}`}
                 />
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">{errors.password}</p>

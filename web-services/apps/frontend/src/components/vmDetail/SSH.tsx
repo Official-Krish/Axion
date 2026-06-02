@@ -45,6 +45,7 @@ export const SSH = ({ vm }: { vm: VM }) => {
                   onClick={() =>
                     copyToClipboard(`ssh-keygen -R ${vm.ipAddress}`)
                   }
+                  title="Copy command"
                   aria-label="Copy command"
                 >
                   <Copy className="h-4 w-4" />
@@ -65,6 +66,7 @@ export const SSH = ({ vm }: { vm: VM }) => {
                   onClick={() =>
                     copyToClipboard(`chmod 600 ${vm.name}-key.pem`)
                   }
+                  title="Copy command"
                   aria-label="Copy command"
                 >
                   <Copy className="h-4 w-4" />
@@ -86,6 +88,7 @@ export const SSH = ({ vm }: { vm: VM }) => {
                       `ssh -i ${vm.name}-key.pem axion@${vm.ipAddress}`,
                     )
                   }
+                  title="Copy command"
                   aria-label="Copy command"
                 >
                   <Copy className="h-4 w-4" />

@@ -85,7 +85,7 @@ export const Appbar = () => {
             {navItems.map((item, idx) => (
               <motion.div
                 key={item.name}
-                className="relative shrink-0 px-4 py-1.5 whitespace-nowrap text-zinc-600 hover:text-zinc-950 dark:text-neutral-300 dark:hover:text-white transition-colors"
+                className="relative shrink-0 px-4 py-1.5 whitespace-nowrap text-zinc-600 hover:text-zinc-950 dark:text-neutral-300 dark:hover:text-white transition-colors cursor-pointer"
                 role="button"
                 tabIndex={0}
                 onMouseEnter={() => setHovered(idx)}
@@ -116,6 +116,7 @@ export const Appbar = () => {
           <button
             className="lg:hidden flex items-center justify-center h-10 w-10 rounded-xl text-zinc-600 dark:text-neutral-300 hover:bg-zinc-100 dark:hover:bg-neutral-800 transition-colors"
             onClick={() => setMobileMenuOpen(true)}
+            title="Open menu"
             aria-label="Open navigation menu"
           >
             <Menu className="h-5 w-5" />
@@ -192,6 +193,7 @@ export const Appbar = () => {
                   <button
                     className="flex items-center justify-center h-9 w-9 rounded-xl text-zinc-600 dark:text-neutral-300 hover:bg-zinc-100 dark:hover:bg-neutral-800 transition-colors"
                     onClick={() => setMobileMenuOpen(false)}
+                    title="Close menu"
                     aria-label="Close navigation menu"
                   >
                     <X className="h-5 w-5" />

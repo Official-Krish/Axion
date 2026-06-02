@@ -10,15 +10,16 @@ import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { toast } from "sonner";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/Skeleton";
 import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 function SkeletonSummary() {
   return (
-    <div className="flex items-center gap-12 mb-12 pb-8 border-b border-black/[0.06] dark:border-white/[0.06] animate-pulse">
+    <div className="flex items-center gap-12 mb-12 pb-8 border-b border-black/[0.06] dark:border-white/[0.06]">
       {[...Array(3)].map((_, i) => (
         <div key={i}>
-          <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-20 mb-1" />
-          <div className="h-7 bg-zinc-200 dark:bg-zinc-800 rounded w-24" />
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-7 w-24" />
         </div>
       ))}
     </div>
@@ -27,15 +28,15 @@ function SkeletonSummary() {
 
 function SkeletonRow() {
   return (
-    <div className="flex items-center justify-between py-5 border-b border-black/[0.04] dark:border-white/[0.04] animate-pulse">
+    <div className="flex items-center justify-between py-5 border-b border-black/[0.04] dark:border-white/[0.04]">
       <div className="flex items-center gap-4">
         <div className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800" />
         <div>
-          <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-32 mb-1" />
-          <div className="h-3 bg-zinc-200 dark:bg-zinc-800 rounded w-48" />
+          <Skeleton className="h-4 w-32 mb-1" />
+          <Skeleton className="h-3 w-48" />
         </div>
       </div>
-      <div className="h-4 bg-zinc-200 dark:bg-zinc-800 rounded w-20" />
+      <Skeleton className="h-4 w-20" />
     </div>
   );
 }
