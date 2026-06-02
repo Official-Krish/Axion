@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { motion, useInView } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { Link } from "react-router-dom";
 
 const TUTORIALS = [
@@ -107,13 +108,11 @@ function TutRow({ t, i }: { t: (typeof TUTORIALS)[0]; i: number }) {
 
 export default function Tutorials() {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 30% at 30% 10%, rgba(153,69,255,0.06), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.06)"
+        size="50% 30%"
+        position="30% 10%"
       />
 
       <div className="max-w-5xl mx-auto">

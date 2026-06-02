@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { Link } from "react-router-dom";
 import { type Machine } from "../../types/depinMachines";
 import { toast } from "sonner";
 import { RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { api } from "@/lib/api";
 
 // per-machine claim status
@@ -98,6 +101,7 @@ export default function ClaimRewards() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   // per-machine claim status
   const [claimStatuses, setClaimStatuses] = useState<
     Record<string, ClaimStatus>
@@ -108,7 +112,7 @@ export default function ClaimRewards() {
     setError(false);
     try {
       const r = await api.get(
-        `/user/depin/getAll?userPublicKey=${wallet.publicKey!.toBase58()}`,
+        `/user/depin/getAll?userPublicKey=${wallet.publicKey?.toBase58() ?? ""}`,
       );
       setMachines(r.data);
     } catch {
@@ -129,7 +133,7 @@ export default function ClaimRewards() {
     try {
       const res = await api.post("/user/depin/claimSOL", {
         id,
-        pubKey: wallet.publicKey!.toBase58(),
+        pubKey: wallet.publicKey?.toBase58() ?? "",
       });
       if (res.status === 200) {
         setStatus(id, "confirmed");
@@ -147,15 +151,13 @@ export default function ClaimRewards() {
 
   return (
     <div
-      className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden"
+      className="min-h-screen bg-background pt-28 pb-40 px-6"
       aria-live="polite"
     >
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 30% at 50% 0%, rgba(16,185,129,0.06), transparent 70%)",
-        }}
+      <BackgroundGlow
+        color="rgba(16,185,129,0.06)"
+        size="50% 30%"
+        position="50% 0%"
       />
 
       <div className="max-w-3xl mx-auto">
@@ -202,7 +204,16 @@ export default function ClaimRewards() {
 
         {/* machines */}
         <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
-          {loading ? (
+          {timedOut && !error ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Loading is taking longer than expected. Please try again.
+              </p>
+              <Button onClick={fetchMachines} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="py-12 flex justify-center">
               <motion.div
                 animate={{ rotate: 360 }}

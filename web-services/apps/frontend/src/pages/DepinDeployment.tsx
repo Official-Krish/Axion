@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { RefreshCw, AlertCircle } from "lucide-react";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { toast } from "sonner";
 import { type VM } from "../../types/vm";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
@@ -21,6 +22,7 @@ export function DepinDeployment() {
   const [vm, setVm] = useState<VM | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   const isTerminated = vm?.status === "DELETED" || vm?.status === "TERMINATED";
 
   useIndexerEvents({
@@ -58,6 +60,24 @@ export function DepinDeployment() {
   useEffect(() => {
     fetchDeployment();
   }, [fetchDeployment]);
+
+  if (timedOut && !error) {
+    return (
+      <div
+        className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+        aria-live="polite"
+      >
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            Loading is taking longer than expected. Please try again.
+          </p>
+          <Button onClick={fetchDeployment} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

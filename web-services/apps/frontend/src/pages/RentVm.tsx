@@ -1,6 +1,8 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { Button } from "@/components/ui/button";
 import type { FinalConfig, VMTypes } from "types/vm";
 import { api } from "@/lib/api";
 import { calculateEscrowEndTime, calculatePrice } from "@/lib/vm";
@@ -29,6 +31,8 @@ export const RentVM = () => {
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [vms, setVms] = useState<VMTypes[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   const [finalConfig, setFinalConfig] = useState<FinalConfig>();
   const [paymentStatus, setPaymentStatus] = useState<
     "Pending" | "Success" | "Failed" | "not_started"
@@ -85,17 +89,19 @@ export const RentVM = () => {
   ];
   const [isNameAvailable, setIsNameAvailable] = useState<boolean>(false);
 
+  const fetchVMConfigs = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get("/vm/getVMTypes");
+      setVms(res.data);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchVMConfigs = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get("/vm/getVMTypes");
-        setVms(res.data);
-      } catch {
-        /* toast handled by api interceptor */
-      }
-      setLoading(false);
-    };
     fetchVMConfigs();
   }, []);
 
@@ -313,7 +319,16 @@ export const RentVM = () => {
         <div className="lg:col-span-2">
           {/* Step 1: Configuration */}
           {currentStep === 1 &&
-            (loading ? (
+            (timedOut && !error ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Loading is taking longer than expected. Please try again.
+                </p>
+                <Button onClick={fetchVMConfigs} className="mt-4">
+                  Retry
+                </Button>
+              </div>
+            ) : loading ? (
               <div className="space-y-6">
                 <div className="p-6 rounded-2xl border border-border/50 bg-card/50 animate-pulse">
                   <div className="h-5 bg-muted rounded w-36 mb-4" />

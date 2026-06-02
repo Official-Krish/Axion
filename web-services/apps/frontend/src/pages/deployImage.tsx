@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { useState } from "react";
 import { Form } from "@/components/DeployImage/Form";
 import { CostEstimation } from "@/components/DeployImage/CostEstimation";
@@ -21,13 +22,11 @@ export function DeployApp() {
   });
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 40% 5%, rgba(56,189,248,0.06), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(56,189,248,0.06)"
+        size="40% 30%"
+        position="40% 5%"
       />
 
       <div className="max-w-6xl mx-auto">

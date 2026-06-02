@@ -14,6 +14,7 @@ import { BillingStatus } from "@/components/vmDetail/BillingStatus";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { toast } from "sonner";
 import { RefreshCw, AlertCircle, ArrowLeft } from "lucide-react";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 function SkeletonBlock() {
   return (
@@ -31,6 +32,7 @@ export function VMDetails() {
   const [vm, setVm] = useState<VM>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
 
   useIndexerEvents({
     account: wallet?.publicKey?.toBase58(),
@@ -97,6 +99,21 @@ export function VMDetails() {
             </Link>
           </div>
         </motion.div>
+      </div>
+    );
+  }
+
+  if (timedOut && !error) {
+    return (
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            Loading is taking longer than expected. Please try again.
+          </p>
+          <Button onClick={fetchVMDetails} className="mt-4">
+            Retry
+          </Button>
+        </div>
       </div>
     );
   }

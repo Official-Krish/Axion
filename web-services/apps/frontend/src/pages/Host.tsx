@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 const OPTIONS = [
   {
@@ -30,13 +31,11 @@ const OPTIONS = [
 
 export default function Host() {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 50% 20%, rgba(153,69,255,0.07), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.07)"
+        size="50% 40%"
+        position="50% 20%"
       />
 
       <div className="max-w-5xl mx-auto">

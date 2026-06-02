@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -184,13 +184,19 @@ export const BillingStatus = ({ vm }: { vm: VM }) => {
                       {topUpAmount.toFixed(3)} SOL
                     </div>
                   </div>
-                  {statusLabel && (
-                    <p
-                      className={`text-xs text-center ${txStatus === "failed" ? "text-red-500" : "text-muted-foreground"}`}
-                    >
-                      {statusLabel}
-                    </p>
-                  )}
+                  <AnimatePresence mode="wait">
+                    {statusLabel && (
+                      <motion.p
+                        key="status"
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -8 }}
+                        className={`text-xs text-center ${txStatus === "failed" ? "text-red-500" : "text-muted-foreground"}`}
+                      >
+                        {statusLabel}
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
                   <Button
                     className="w-full cursor-pointer"
                     onClick={handleTopUp}

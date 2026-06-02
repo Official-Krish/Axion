@@ -1,14 +1,13 @@
 import { motion } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 export default function Notifications() {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 40% 0%, rgba(153,69,255,0.05), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.05)"
+        size="40% 30%"
+        position="40% 0%"
       />
       <div className="max-w-3xl mx-auto">
         <div className="mb-16">

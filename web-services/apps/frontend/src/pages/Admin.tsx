@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { motion } from "motion/react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   Card,
   CardContent,
@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -37,6 +37,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import type { VM } from "types/vm";
 import {
   FundVaultAccount,
@@ -140,6 +141,7 @@ export function AdminPage() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [vms, setVMs] = useState<VM[]>([]);
   const [loadingVms, setLoadingVms] = useState(false);
+  const timedOut = useLoadingTimeout(loadingVms, 30000);
 
   // Track pending signatures → which op they belong to
   const pendingSigs = useRef<Map<string, (event: IndexerEvent) => void>>(
@@ -178,17 +180,21 @@ export function AdminPage() {
     },
   });
 
+  const fetchVMs = useCallback(async () => {
+    setLoadingVms(true);
+    try {
+      const res = await api.get(`/vm/getAll?adminKey=${wallet?.publicKey}`);
+      if (res.status === 200) setVMs(res.data || []);
+    } catch {
+      toast.error("Failed to load virtual machines");
+    }
+    setLoadingVms(false);
+  }, [wallet?.publicKey]);
+
   useEffect(() => {
     if (activeTab !== "vms") return;
-    setLoadingVms(true);
-    api
-      .get(`/vm/getAll?adminKey=${wallet?.publicKey}`)
-      .then((res) => {
-        if (res.status === 200) setVMs(res.data || []);
-      })
-      .catch(() => toast.error("Failed to load virtual machines"))
-      .finally(() => setLoadingVms(false));
-  }, [activeTab, wallet?.publicKey]);
+    fetchVMs();
+  }, [activeTab, fetchVMs]);
 
   // ── Helper: submit tx, show "submitted", wait for indexer event ──
   function watchTx(
@@ -388,7 +394,7 @@ export function AdminPage() {
     );
   };
 
-  if (wallet!.publicKey!.toBase58() !== ADMIN_KEY) {
+  if (wallet?.publicKey?.toBase58() !== ADMIN_KEY) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Alert className="max-w-md">
@@ -462,349 +468,389 @@ export function AdminPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* ── Vault tab ─────────────────────────────────────────── */}
-          <TabsContent value="vault" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Initialize Vault */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Plus className="w-5 h-5 text-blue-500" /> Initialize Vault
-                  </CardTitle>
-                  <CardDescription>
-                    {vaultExists
-                      ? "Vault is already initialized"
-                      : "Create the platform vault account"}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    onClick={handleInit}
-                    disabled={busy(initOp) || vaultExists}
-                    className="w-full"
-                  >
-                    {vaultExists ? (
-                      "Vault Initialized ✓"
-                    ) : busy(initOp) ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Initializing…
-                      </>
-                    ) : (
-                      "Initialize Vault"
-                    )}
-                  </Button>
-                  <TxBanner op={initOp} />
-                </CardContent>
-              </Card>
-
-              {/* Fund Vault */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ArrowUpCircle className="w-5 h-5 text-green-500" /> Fund
-                    Vault
-                  </CardTitle>
-                  <CardDescription>
-                    Add funds to your vault account
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Amount (SOL)</Label>
-                    <Input
-                      type="number"
-                      step="0.0001"
-                      placeholder="0.0000"
-                      value={fundVault.amount}
-                      onChange={(e) => {
-                        setFundVault({ ...fundVault, amount: e.target.value });
-                        setErrors((prev) => ({ ...prev, fundAmount: "" }));
-                      }}
-                    />
-                    {errors.fundAmount && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.fundAmount}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    onClick={handleFund}
-                    disabled={busy(fundOp)}
-                    className="w-full"
-                  >
-                    {busy(fundOp) ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Funding…
-                      </>
-                    ) : (
-                      "Fund Vault"
-                    )}
-                  </Button>
-                  <TxBanner op={fundOp} />
-                </CardContent>
-              </Card>
-
-              {/* Withdraw Funds */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ArrowDownCircle className="w-5 h-5 text-red-500" />{" "}
-                    Withdraw Funds
-                  </CardTitle>
-                  <CardDescription>
-                    Withdraw funds from your vault to an address
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Amount (SOL)</Label>
-                    <Input
-                      type="number"
-                      step="0.0001"
-                      placeholder="0.0000"
-                      value={withdrawVault.amount}
-                      onChange={(e) => {
-                        setWithdrawVault({
-                          ...withdrawVault,
-                          amount: e.target.value,
-                        });
-                        setErrors((prev) => ({ ...prev, withdrawAmount: "" }));
-                      }}
-                    />
-                    {errors.withdrawAmount && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.withdrawAmount}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    onClick={handleWithdraw}
-                    disabled={busy(withdrawOp)}
-                    variant="destructive"
-                    className="w-full"
-                  >
-                    {busy(withdrawOp) ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Withdrawing…
-                      </>
-                    ) : (
-                      "Withdraw Funds"
-                    )}
-                  </Button>
-                  <TxBanner op={withdrawOp} />
-                </CardContent>
-              </Card>
-
-              {/* Check Balance */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Eye className="w-5 h-5 text-purple-500" /> Check Balance
-                  </CardTitle>
-                  <CardDescription>
-                    View your current vault balance
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button
-                    onClick={handleBalance}
-                    disabled={busy(balanceOp)}
-                    variant="outline"
-                    className="w-full"
-                  >
-                    {busy(balanceOp) ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Checking…
-                      </>
-                    ) : (
-                      "Check Balance"
-                    )}
-                  </Button>
-                  <TxBanner op={balanceOp} />
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
-
-          {/* ── VM tab ────────────────────────────────────────────── */}
-          <TabsContent value="vms" className="space-y-6">
-            {loadingVms ? (
-              <Card>
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded w-64 animate-pulse" />
-                  <div className="h-4 bg-muted rounded w-48 animate-pulse mt-2" />
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-lg overflow-hidden">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          {[...Array(10)].map((_, i) => (
-                            <TableHead key={i}>
-                              <div className="h-4 bg-muted rounded w-16 animate-pulse" />
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {[...Array(3)].map((_, row) => (
-                          <TableRow key={row}>
-                            {[...Array(10)].map((_, cell) => (
-                              <TableCell key={cell}>
-                                <div className="h-4 bg-muted rounded w-full animate-pulse" />
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </CardContent>
-              </Card>
-            ) : vms.length === 0 ? (
-              <Alert>
-                <AlertDescription>No virtual machines found.</AlertDescription>
-              </Alert>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Server className="w-5 h-5" /> Virtual Machines (
-                    {vms.length} total)
-                  </CardTitle>
-                  <CardDescription>
-                    Monitor and manage all deployed virtual machines
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="border rounded-lg overflow-hidden">
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>VM ID</TableHead>
-                            <TableHead>Name</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Type</TableHead>
-                            <TableHead>Region</TableHead>
-                            <TableHead>Resources</TableHead>
-                            <TableHead>IP Address</TableHead>
-                            <TableHead>Cost</TableHead>
-                            <TableHead>Duration</TableHead>
-                            <TableHead>Created At</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {paginatedVMs.map((vm) => (
-                            <TableRow key={vm.id}>
-                              <TableCell className="font-mono text-sm">
-                                {vm.instanceId}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {vm.name}
-                              </TableCell>
-                              <TableCell>{getStatusBadge(vm.status)}</TableCell>
-                              <TableCell>{vm.VMConfig.machineType}</TableCell>
-                              <TableCell>{vm.region}</TableCell>
-                              <TableCell className="text-sm">
-                                <div>{vm.VMConfig.os}</div>
-                                <div className="text-muted-foreground">
-                                  {vm.VMConfig.diskSize} GB
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {vm.ipAddress}
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {Number(vm.price).toFixed(6)} SOL
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {vm.endTime
-                                  ? `${Math.floor((new Date(vm.endTime).getTime() - new Date(vm.createdAt).getTime()) / 60000)} min`
-                                  : "N/A"}
-                              </TableCell>
-                              <TableCell className="text-sm">
-                                {formatter.format(new Date(vm.createdAt))}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6">
-                      <div className="text-sm text-muted-foreground">
-                        Showing {startIndex + 1}–
-                        {Math.min(startIndex + itemsPerPage, totalItems)} of{" "}
-                        {totalItems} VMs
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setCurrentPage((p) => Math.max(1, p - 1))
-                          }
-                          disabled={currentPage === 1}
-                        >
-                          <ChevronLeft className="w-4 h-4" /> Previous
-                        </Button>
-                        {Array.from(
-                          { length: Math.min(5, totalPages) },
-                          (_, i) => i + 1,
-                        ).map((page) => (
-                          <Button
-                            key={page}
-                            variant={
-                              currentPage === page ? "default" : "outline"
-                            }
-                            size="sm"
-                            onClick={() => setCurrentPage(page)}
-                            className="w-8 h-8 p-0"
-                          >
-                            {page}
-                          </Button>
-                        ))}
-                        {totalPages > 5 && (
+          <AnimatePresence mode="wait">
+            {activeTab === "vault" && (
+              <motion.div
+                key="vault"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {/* Initialize Vault */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Plus className="w-5 h-5 text-blue-500" /> Initialize
+                        Vault
+                      </CardTitle>
+                      <CardDescription>
+                        {vaultExists
+                          ? "Vault is already initialized"
+                          : "Create the platform vault account"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Button
+                        onClick={handleInit}
+                        disabled={busy(initOp) || vaultExists}
+                        className="w-full"
+                      >
+                        {vaultExists ? (
+                          "Vault Initialized ✓"
+                        ) : busy(initOp) ? (
                           <>
-                            <span className="text-muted-foreground">…</span>
-                            <Button
-                              variant={
-                                currentPage === totalPages
-                                  ? "default"
-                                  : "outline"
-                              }
-                              size="sm"
-                              onClick={() => setCurrentPage(totalPages)}
-                              className="w-8 h-8 p-0"
-                            >
-                              {totalPages}
-                            </Button>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Initializing…
                           </>
+                        ) : (
+                          "Initialize Vault"
                         )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            setCurrentPage((p) => Math.min(totalPages, p + 1))
-                          }
-                          disabled={currentPage === totalPages}
-                        >
-                          Next <ChevronRight className="w-4 h-4" />
-                        </Button>
+                      </Button>
+                      <TxBanner op={initOp} />
+                    </CardContent>
+                  </Card>
+
+                  {/* Fund Vault */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowUpCircle className="w-5 h-5 text-green-500" />{" "}
+                        Fund Vault
+                      </CardTitle>
+                      <CardDescription>
+                        Add funds to your vault account
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Amount (SOL)</Label>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          placeholder="0.0000"
+                          value={fundVault.amount}
+                          onChange={(e) => {
+                            setFundVault({
+                              ...fundVault,
+                              amount: e.target.value,
+                            });
+                            setErrors((prev) => ({ ...prev, fundAmount: "" }));
+                          }}
+                        />
+                        {errors.fundAmount && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {errors.fundAmount}
+                          </p>
+                        )}
                       </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                      <Button
+                        onClick={handleFund}
+                        disabled={busy(fundOp)}
+                        className="w-full"
+                      >
+                        {busy(fundOp) ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Funding…
+                          </>
+                        ) : (
+                          "Fund Vault"
+                        )}
+                      </Button>
+                      <TxBanner op={fundOp} />
+                    </CardContent>
+                  </Card>
+
+                  {/* Withdraw Funds */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <ArrowDownCircle className="w-5 h-5 text-red-500" />{" "}
+                        Withdraw Funds
+                      </CardTitle>
+                      <CardDescription>
+                        Withdraw funds from your vault to an address
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Amount (SOL)</Label>
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          placeholder="0.0000"
+                          value={withdrawVault.amount}
+                          onChange={(e) => {
+                            setWithdrawVault({
+                              ...withdrawVault,
+                              amount: e.target.value,
+                            });
+                            setErrors((prev) => ({
+                              ...prev,
+                              withdrawAmount: "",
+                            }));
+                          }}
+                        />
+                        {errors.withdrawAmount && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {errors.withdrawAmount}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        onClick={handleWithdraw}
+                        disabled={busy(withdrawOp)}
+                        variant="destructive"
+                        className="w-full"
+                      >
+                        {busy(withdrawOp) ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Withdrawing…
+                          </>
+                        ) : (
+                          "Withdraw Funds"
+                        )}
+                      </Button>
+                      <TxBanner op={withdrawOp} />
+                    </CardContent>
+                  </Card>
+
+                  {/* Check Balance */}
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Eye className="w-5 h-5 text-purple-500" /> Check
+                        Balance
+                      </CardTitle>
+                      <CardDescription>
+                        View your current vault balance
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <Button
+                        onClick={handleBalance}
+                        disabled={busy(balanceOp)}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        {busy(balanceOp) ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Checking…
+                          </>
+                        ) : (
+                          "Check Balance"
+                        )}
+                      </Button>
+                      <TxBanner op={balanceOp} />
+                    </CardContent>
+                  </Card>
+                </div>
+              </motion.div>
             )}
-          </TabsContent>
+            {activeTab === "vms" && (
+              <motion.div
+                key="vms"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="space-y-6"
+              >
+                {timedOut ? (
+                  <div className="text-center py-12">
+                    <p className="text-muted-foreground">
+                      Loading is taking longer than expected. Please try again.
+                    </p>
+                    <Button onClick={fetchVMs} className="mt-4">
+                      Retry
+                    </Button>
+                  </div>
+                ) : loadingVms ? (
+                  <Card>
+                    <CardHeader>
+                      <div className="h-6 bg-muted rounded w-64 animate-pulse" />
+                      <div className="h-4 bg-muted rounded w-48 animate-pulse mt-2" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-lg overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              {[...Array(10)].map((_, i) => (
+                                <TableHead key={i}>
+                                  <div className="h-4 bg-muted rounded w-16 animate-pulse" />
+                                </TableHead>
+                              ))}
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {[...Array(3)].map((_, row) => (
+                              <TableRow key={row}>
+                                {[...Array(10)].map((_, cell) => (
+                                  <TableCell key={cell}>
+                                    <div className="h-4 bg-muted rounded w-full animate-pulse" />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : vms.length === 0 ? (
+                  <Alert>
+                    <AlertDescription>
+                      No virtual machines found.
+                    </AlertDescription>
+                  </Alert>
+                ) : (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2">
+                        <Server className="w-5 h-5" /> Virtual Machines (
+                        {vms.length} total)
+                      </CardTitle>
+                      <CardDescription>
+                        Monitor and manage all deployed virtual machines
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>VM ID</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Type</TableHead>
+                                <TableHead>Region</TableHead>
+                                <TableHead>Resources</TableHead>
+                                <TableHead>IP Address</TableHead>
+                                <TableHead>Cost</TableHead>
+                                <TableHead>Duration</TableHead>
+                                <TableHead>Created At</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {paginatedVMs.map((vm) => (
+                                <TableRow key={vm.id}>
+                                  <TableCell className="font-mono text-sm">
+                                    {vm.instanceId}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {vm.name}
+                                  </TableCell>
+                                  <TableCell>
+                                    {getStatusBadge(vm.status)}
+                                  </TableCell>
+                                  <TableCell>
+                                    {vm.VMConfig.machineType}
+                                  </TableCell>
+                                  <TableCell>{vm.region}</TableCell>
+                                  <TableCell className="text-sm">
+                                    <div>{vm.VMConfig.os}</div>
+                                    <div className="text-muted-foreground">
+                                      {vm.VMConfig.diskSize} GB
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {vm.ipAddress}
+                                  </TableCell>
+                                  <TableCell className="font-medium">
+                                    {Number(vm.price).toFixed(6)} SOL
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {vm.endTime
+                                      ? `${Math.floor((new Date(vm.endTime).getTime() - new Date(vm.createdAt).getTime()) / 60000)} min`
+                                      : "N/A"}
+                                  </TableCell>
+                                  <TableCell className="text-sm">
+                                    {formatter.format(new Date(vm.createdAt))}
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </div>
+
+                      {totalPages > 1 && (
+                        <div className="flex items-center justify-between mt-6">
+                          <div className="text-sm text-muted-foreground">
+                            Showing {startIndex + 1}–
+                            {Math.min(startIndex + itemsPerPage, totalItems)} of{" "}
+                            {totalItems} VMs
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage((p) => Math.max(1, p - 1))
+                              }
+                              disabled={currentPage === 1}
+                            >
+                              <ChevronLeft className="w-4 h-4" /> Previous
+                            </Button>
+                            {Array.from(
+                              { length: Math.min(5, totalPages) },
+                              (_, i) => i + 1,
+                            ).map((page) => (
+                              <Button
+                                key={page}
+                                variant={
+                                  currentPage === page ? "default" : "outline"
+                                }
+                                size="sm"
+                                onClick={() => setCurrentPage(page)}
+                                className="w-8 h-8 p-0"
+                              >
+                                {page}
+                              </Button>
+                            ))}
+                            {totalPages > 5 && (
+                              <>
+                                <span className="text-muted-foreground">…</span>
+                                <Button
+                                  variant={
+                                    currentPage === totalPages
+                                      ? "default"
+                                      : "outline"
+                                  }
+                                  size="sm"
+                                  onClick={() => setCurrentPage(totalPages)}
+                                  className="w-8 h-8 p-0"
+                                >
+                                  {totalPages}
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                setCurrentPage((p) =>
+                                  Math.min(totalPages, p + 1),
+                                )
+                              }
+                              disabled={currentPage === totalPages}
+                            >
+                              Next <ChevronRight className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Tabs>
       </motion.div>
     </div>

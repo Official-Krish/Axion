@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { toast } from "sonner";
 import { Step1, type Step1FormData } from "@/components/DepinHosting/Step1";
 import { Step2 } from "@/components/DepinHosting/Step2";
@@ -267,13 +268,10 @@ export function HostRegister() {
       className="min-h-screen pt-24 pb-32 px-6"
       style={{ background: "#080810" }}
     >
-      {/* Subtle radial glow */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 35% at 50% 8%, rgba(99,102,241,0.09), transparent 70%)",
-        }}
+      <BackgroundGlow
+        color="rgba(99,102,241,0.09)"
+        size="50% 35%"
+        position="50% 8%"
       />
 
       <div className="relative max-w-[1180px] mx-auto">

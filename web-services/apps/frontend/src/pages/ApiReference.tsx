@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 const METHODS = ["GET", "POST", "PUT", "DELETE"] as const;
 type Method = (typeof METHODS)[number];
@@ -186,13 +187,11 @@ function GroupSection({
 
 export default function ApiReference() {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 80% 10%, rgba(56,189,248,0.05), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(56,189,248,0.05)"
+        size="40% 30%"
+        position="80% 10%"
       />
 
       <div className="max-w-4xl mx-auto">

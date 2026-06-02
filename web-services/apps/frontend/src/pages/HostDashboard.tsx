@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { useCallback, useEffect, useState } from "react";
 import { type Machine } from "../../types/depinMachines";
 import { api } from "@/lib/api";
@@ -8,6 +9,8 @@ import { DashboardTable } from "@/components/DepinHostDashboard/Table";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { toast } from "sonner";
 import { RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 
 function SkeletonSummary() {
   return (
@@ -43,6 +46,7 @@ export function HostDashboard() {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
 
   useIndexerEvents({
     account: wallet.publicKey?.toBase58(),
@@ -96,15 +100,13 @@ export function HostDashboard() {
 
   return (
     <div
-      className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden"
+      className="min-h-screen bg-background pt-28 pb-40 px-6"
       aria-live="polite"
     >
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 25% at 60% 5%, rgba(16,185,129,0.06), transparent 70%)",
-        }}
+      <BackgroundGlow
+        color="rgba(16,185,129,0.06)"
+        size="40% 25%"
+        position="60% 5%"
       />
 
       <div className="max-w-7xl mx-auto">
@@ -148,7 +150,18 @@ export function HostDashboard() {
           </div>
         </div>
 
-        {error ? (
+        {timedOut && !error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24"
+          >
+            <p className="text-zinc-500 text-sm mb-6">
+              Loading is taking longer than expected. Please try again.
+            </p>
+            <Button onClick={fetchMachines}>Retry</Button>
+          </motion.div>
+        ) : error ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}

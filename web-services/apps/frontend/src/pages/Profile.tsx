@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 import { api } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { showSuccess, showError } from "@/lib/toast";
 import { toast } from "sonner";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { Button } from "@/components/ui/button";
 
 function Row({
   label,
@@ -68,22 +71,31 @@ const SECTIONS = [
 export default function Profile() {
   const { publicKey } = useWallet();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({ name: "", email: "" });
   const [saving, setSaving] = useState(false);
 
+  const fetchProfile = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get("/user/profile");
+      const d = res.data?.data ?? res.data;
+      setFormData({
+        name: d.name ?? "",
+        email: d.email ?? localStorage.getItem("email") ?? "",
+      });
+    } catch {
+      setError(true);
+      showError("Failed to load profile");
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    api
-      .get("/user/profile")
-      .then((res) => {
-        const d = res.data?.data ?? res.data;
-        setFormData({
-          name: d.name ?? "",
-          email: d.email ?? localStorage.getItem("email") ?? "",
-        });
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    fetchProfile();
   }, [publicKey]);
 
   const handleSave = async () => {
@@ -108,20 +120,18 @@ export default function Profile() {
     setIsEditing(false);
   };
 
-  const pk = publicKey!.toBase58();
+  const pk = publicKey?.toBase58() ?? "";
   const email = formData.email ?? localStorage.getItem("email") ?? "";
 
   return (
     <div
       aria-live="polite"
-      className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden"
+      className="min-h-screen bg-background pt-28 pb-40 px-6"
     >
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 60% 0%, rgba(153,69,255,0.05), transparent 70%)",
-        }}
+      <BackgroundGlow
+        color="rgba(153,69,255,0.05)"
+        size="40% 30%"
+        position="60% 0%"
       />
 
       <div className="max-w-3xl mx-auto">
@@ -174,7 +184,16 @@ export default function Profile() {
               )}
             </div>
             <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
-              {loading ? (
+              {timedOut && !error ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Loading is taking longer than expected. Please try again.
+                  </p>
+                  <Button onClick={fetchProfile} className="mt-4">
+                    Retry
+                  </Button>
+                </div>
+              ) : loading ? (
                 <>
                   <SkeletonRow />
                   <SkeletonRow />

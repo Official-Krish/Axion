@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 function LegalPage({
   title,
@@ -12,13 +13,11 @@ function LegalPage({
   sections: { heading: string; body: string }[];
 }) {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 20% at 70% 5%, rgba(153,69,255,0.04), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.04)"
+        size="40% 20%"
+        position="70% 5%"
       />
 
       <div className="max-w-3xl mx-auto">

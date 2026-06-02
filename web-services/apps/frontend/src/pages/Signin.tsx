@@ -70,7 +70,7 @@ export function SignIn() {
         navigate("/dashboard");
       } else {
         toast.error("Failed to sign in. Please try again.");
-        console.error("Failed to sign in:", res.data);
+        /* login error handled by toast above */
       }
     } catch {
       /* toast handled by api interceptor */

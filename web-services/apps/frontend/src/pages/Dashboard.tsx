@@ -1,6 +1,7 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/StatusBadge";
 import {
@@ -47,6 +48,7 @@ export function Dashboard() {
   const [vms, setVMs] = useState<VM[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   const navigate = useNavigate();
   const wallet = useWallet();
 
@@ -193,6 +195,17 @@ export function Dashboard() {
         </motion.div>
       )}
 
+      {timedOut && !error && (
+        <div className="text-center py-12">
+          <p className="text-muted-foreground">
+            Loading is taking longer than expected. Please try again.
+          </p>
+          <Button onClick={fetchVMs} className="mt-4">
+            Retry
+          </Button>
+        </div>
+      )}
+
       {loading && !error && (
         <div className="space-y-4">
           {[...Array(3)].map((_, i) => (
@@ -202,12 +215,14 @@ export function Dashboard() {
       )}
 
       {!loading && !error && (
-        <div className="space-y-4">
+        <AnimatePresence>
           {filteredVMs.map((vm, index) => (
             <motion.div
               key={vm.id}
+              layout
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.95 }}
               transition={{ delay: index * 0.1 }}
               className="group p-6 rounded-2xl border border-border/50 bg-card/50 hover:bg-card/80 transition-all duration-300"
               whileHover={{ scale: 1.02 }}
@@ -323,7 +338,7 @@ export function Dashboard() {
               </div>
             </motion.div>
           ))}
-        </div>
+        </AnimatePresence>
       )}
 
       {!loading && !error && filteredVMs.length === 0 && (

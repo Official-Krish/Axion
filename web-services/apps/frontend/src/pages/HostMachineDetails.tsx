@@ -2,7 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { useParams, Link } from "react-router-dom";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
 import { api } from "@/lib/api";
 import { type Machine } from "../../types/depinMachines";
 
@@ -35,13 +38,14 @@ export function HostMachineDetails() {
   const [machine, setMachine] = useState<Machine | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
 
   const fetchMachine = useCallback(async () => {
     setLoading(true);
     setError(false);
     try {
       const r = await api.get(
-        `/user/depin/getAll?userPublicKey=${wallet.publicKey!.toBase58()}`,
+        `/user/depin/getAll?userPublicKey=${wallet.publicKey?.toBase58() ?? ""}`,
       );
       setMachine(r.data.find((m: Machine) => m.id === id) ?? null);
     } catch {
@@ -54,9 +58,22 @@ export function HostMachineDetails() {
     fetchMachine();
   }, [fetchMachine]);
 
-  if (loading) {
+  if (timedOut && !error) {
     return (
       <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center mt-16">
+        <div className="text-center py-12">
+          <p className="text-zinc-500 text-sm mb-6">
+            Loading is taking longer than expected. Please try again.
+          </p>
+          <Button onClick={fetchMachine}>Retry</Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center mt-16">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
@@ -68,7 +85,7 @@ export function HostMachineDetails() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center mt-16">
+      <div className="min-h-screen bg-background flex items-center justify-center mt-16">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -92,7 +109,7 @@ export function HostMachineDetails() {
 
   if (!machine) {
     return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center mt-16">
+      <div className="min-h-screen bg-background flex items-center justify-center mt-16">
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -111,13 +128,11 @@ export function HostMachineDetails() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 60% 0%, rgba(153,69,255,0.05), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.05)"
+        size="40% 30%"
+        position="60% 0%"
       />
 
       <div className="max-w-3xl mx-auto">

@@ -24,8 +24,7 @@ export const StartRentalSessionWithEscrow = async (
       signature: tx,
       message: "Rental session started successfully with escrow",
     };
-  } catch (e) {
-    console.error("Error starting rental session with escrow", e);
+  } catch {
     return null;
   }
 };
@@ -48,8 +47,7 @@ export const TopUpEscrowSession = async (
       signature: tx,
       message: "Escrow session topped up successfully",
     };
-  } catch (e) {
-    console.error("Error topping up escrow session", e);
+  } catch {
     return null;
   }
 };
@@ -76,8 +74,7 @@ export const FinalizeRentalWithEscrow = async (
       signature: tx,
       message: "Rental finalized successfully with escrow",
     };
-  } catch (e) {
-    console.error("Error finalizing rental with escrow", e);
+  } catch {
     return null;
   }
 };

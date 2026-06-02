@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { motion, useInView, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 const FAQS = [
   {
@@ -85,13 +86,11 @@ function Item({ faq, i }: { faq: (typeof FAQS)[0]; i: number }) {
 
 export default function FAQ() {
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 50% 10%, rgba(153,69,255,0.06), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.06)"
+        size="40% 30%"
+        position="50% 10%"
       />
 
       <div className="max-w-4xl mx-auto">

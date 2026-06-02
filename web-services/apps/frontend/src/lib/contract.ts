@@ -19,7 +19,7 @@ async function sendAndConfirm(program: Program, tx: Promise<string>) {
   const signature = await tx;
   const conf = await program.provider.connection.confirmTransaction(signature);
   if (conf.value.err) {
-    console.error("Transaction failed", conf.value.err);
+    /* error logged silently */
     return null;
   }
   return { success: true as const, signature, message: "" as string };
@@ -37,8 +37,7 @@ export const InitiatesVaultAccount = async (wallet: AnchorWallet) => {
     );
     if (!result) return null;
     return { ...result, message: "Vault account initialized successfully" };
-  } catch (error) {
-    console.error("Error initializing vault account", error);
+  } catch {
     return null;
   }
 };
@@ -71,8 +70,7 @@ export const FundVaultAccount = async (
       message: "Vault account funded successfully",
       balance: balance / LAMPORTS_PER_SOL,
     };
-  } catch (error) {
-    console.error("Error funding vault account", error);
+  } catch {
     return null;
   }
 };
@@ -96,8 +94,7 @@ export const transferFromVault = async (
       ...result,
       message: "Funds transferred from vault account successfully",
     };
-  } catch (error) {
-    console.error("Error transferring funds from vault account", error);
+  } catch {
     return null;
   }
 };
@@ -122,8 +119,7 @@ export const EndRentalSession = async (id: string, wallet: AnchorWallet) => {
     );
     if (!result) return null;
     return { ...result, message: "Rental session ended successfully" };
-  } catch (error) {
-    console.error("Error ending rental session", error);
+  } catch {
     return null;
   }
 };
@@ -163,8 +159,7 @@ export const TransferToVaultAndStartRental = async (
         "Funds transferred to vault and rental session started successfully",
       rentalSessionPda,
     };
-  } catch (error) {
-    console.error("Error transferring to vault and starting rental", error);
+  } catch {
     return null;
   }
 };
@@ -187,8 +182,7 @@ export const WithdrawFromVault = async (
       ...result,
       message: "Funds withdrawn from vault account successfully",
     };
-  } catch (error) {
-    console.error("Error withdrawing from vault account", error);
+  } catch {
     return null;
   }
 };
@@ -210,8 +204,7 @@ export const GetVaultBalance = async (wallet: AnchorWallet) => {
       balance: balance / LAMPORTS_PER_SOL,
       message: "Vault balance retrieved successfully",
     };
-  } catch (error) {
-    console.error("Error fetching vault balance", error);
+  } catch {
     return null;
   }
 };

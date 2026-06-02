@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 export default function Contact() {
   const [focused, setFocused] = useState<string | null>(null);
@@ -14,13 +15,11 @@ export default function Contact() {
     }`;
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 80% 30%, rgba(153,69,255,0.07), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.07)"
+        size="50% 40%"
+        position="80% 30%"
       />
 
       <div className="max-w-5xl mx-auto">
