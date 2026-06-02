@@ -1,8 +1,7 @@
 import { motion } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Receipt, Clock, ExternalLink } from "lucide-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 interface SettlementData {
@@ -22,10 +21,7 @@ export const SettlementSummary = ({ vmId }: { vmId: string }) => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await axios.get(
-          `${BACKEND_URL}/user/depin/settlement/${vmId}`,
-          { headers: { Authorization: `${localStorage.getItem("token")}` } },
-        );
+        const res = await api.get(`/user/depin/settlement/${vmId}`);
         setSettlement(res.data.settlement);
       } catch {
         /* not settled yet */

@@ -1,11 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useInView } from "motion/react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { Link } from "react-router-dom";
 import { type Machine } from "../../types/depinMachines";
-import { BACKEND_URL } from "@/config";
 import { toast } from "sonner";
-import axios from "axios";
+import { RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { api } from "@/lib/api";
 
 // per-machine claim status
 type ClaimStatus = "idle" | "submitted" | "confirmed" | "failed";
@@ -97,35 +100,41 @@ export default function ClaimRewards() {
   const wallet = useWallet();
   const [machines, setMachines] = useState<Machine[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   // per-machine claim status
   const [claimStatuses, setClaimStatuses] = useState<
     Record<string, ClaimStatus>
   >({});
 
-  useEffect(() => {
-    if (!wallet.publicKey) return;
-    axios
-      .get(
-        `${BACKEND_URL}/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`,
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      )
-      .then((r) => setMachines(r.data))
-      .catch(console.error)
-      .finally(() => setLoading(false));
+  const fetchMachines = useCallback(async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const r = await api.get(
+        `/user/depin/getAll?userPublicKey=${wallet.publicKey?.toBase58() ?? ""}`,
+      );
+      setMachines(r.data);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
   }, [wallet.publicKey]);
+
+  useEffect(() => {
+    fetchMachines();
+  }, [fetchMachines]);
 
   const setStatus = (id: string, s: ClaimStatus) =>
     setClaimStatuses((p) => ({ ...p, [id]: s }));
 
   const handleClaim = async (id: string) => {
-    if (!wallet.publicKey) return;
     setStatus(id, "submitted");
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/claimSOL`,
-        { id, pubKey: wallet.publicKey.toBase58() },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/claimSOL", {
+        id,
+        pubKey: wallet.publicKey?.toBase58() ?? "",
+      });
       if (res.status === 200) {
         setStatus(id, "confirmed");
         toast.success("Claim submitted. Rewards will arrive shortly.");
@@ -138,38 +147,17 @@ export default function ClaimRewards() {
     }
   };
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Sign in to claim rewards
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   const total = machines.reduce((s, m) => s + m.claimedSOL, 0);
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 30% at 50% 0%, rgba(16,185,129,0.06), transparent 70%)",
-        }}
+    <div
+      className="min-h-screen bg-background pt-28 pb-40 px-6"
+      aria-live="polite"
+    >
+      <BackgroundGlow
+        color="rgba(16,185,129,0.06)"
+        size="50% 30%"
+        position="50% 0%"
       />
 
       <div className="max-w-3xl mx-auto">
@@ -216,13 +204,36 @@ export default function ClaimRewards() {
 
         {/* machines */}
         <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
-          {loading ? (
+          {timedOut && !error ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">
+                Loading is taking longer than expected. Please try again.
+              </p>
+              <Button onClick={fetchMachines} className="mt-4">
+                Retry
+              </Button>
+            </div>
+          ) : loading ? (
             <div className="py-12 flex justify-center">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                 className="w-5 h-5 border border-zinc-300 dark:border-zinc-700 border-t-zinc-900 dark:border-t-white rounded-full"
               />
+            </div>
+          ) : error ? (
+            <div className="py-12 text-center">
+              <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-4" />
+              <p className="text-sm text-zinc-400 dark:text-zinc-600 mb-4">
+                Failed to load machines.
+              </p>
+              <button
+                onClick={fetchMachines}
+                className="text-xs text-zinc-700 dark:text-zinc-300 hover:text-emerald-500 transition-colors flex items-center gap-1 justify-center mx-auto"
+              >
+                <RefreshCw className="h-3 w-3" />
+                Retry
+              </button>
             </div>
           ) : machines.length === 0 ? (
             <div className="py-12 text-center">

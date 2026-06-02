@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { Link } from "react-router-dom";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 const STEPS = [
   {
@@ -27,38 +27,12 @@ const STEPS = [
 ];
 
 export function Hosting() {
-  const wallet = useWallet();
-
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Connect your wallet to continue
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 50% 15%, rgba(16,185,129,0.07), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(16,185,129,0.07)"
+        size="50% 40%"
+        position="50% 15%"
       />
 
       <div className="max-w-5xl mx-auto">

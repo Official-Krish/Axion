@@ -1,11 +1,14 @@
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Copy, Monitor } from "lucide-react";
+import { Copy, Link2, Monitor } from "lucide-react";
 import type { VM } from "types/vm";
 import { copyToClipboard } from "@/lib/utils";
+import { toast } from "sonner";
 
 export const Sidebar = ({ vm }: { vm: VM }) => {
+  const vmUrl = `${window.location.origin}/vm/${vm.id}`;
+
   return (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
@@ -25,6 +28,17 @@ export const Sidebar = ({ vm }: { vm: VM }) => {
           >
             <Copy className="h-4 w-4 mr-2" />
             Copy IP Address
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start cursor-pointer"
+            onClick={() => {
+              copyToClipboard(vmUrl);
+              toast.success("VM link copied!", { position: "bottom-right" });
+            }}
+          >
+            <Link2 className="h-4 w-4 mr-2" />
+            Copy VM Link
           </Button>
           <Button
             variant="outline"

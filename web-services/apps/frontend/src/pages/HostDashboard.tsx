@@ -1,18 +1,53 @@
 import { motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
+import { useCallback, useEffect, useState } from "react";
 import { type Machine } from "../../types/depinMachines";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { DashboardTable } from "@/components/DepinHostDashboard/Table";
 import { useIndexerEvents } from "@/lib/useIndexerEvents";
 import { toast } from "sonner";
+import { RefreshCw, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/Skeleton";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+
+function SkeletonSummary() {
+  return (
+    <div className="flex items-center gap-12 mb-12 pb-8 border-b border-black/[0.06] dark:border-white/[0.06]">
+      {[...Array(3)].map((_, i) => (
+        <div key={i}>
+          <Skeleton className="h-3 w-20 mb-1" />
+          <Skeleton className="h-7 w-24" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function SkeletonRow() {
+  return (
+    <div className="flex items-center justify-between py-5 border-b border-black/[0.04] dark:border-white/[0.04]">
+      <div className="flex items-center gap-4">
+        <div className="w-1.5 h-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+        <div>
+          <Skeleton className="h-4 w-32 mb-1" />
+          <Skeleton className="h-3 w-48" />
+        </div>
+      </div>
+      <Skeleton className="h-4 w-20" />
+    </div>
+  );
+}
 
 export function HostDashboard() {
   const wallet = useWallet();
   const navigate = useNavigate();
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
 
   useIndexerEvents({
     account: wallet.publicKey?.toBase58(),
@@ -43,58 +78,39 @@ export function HostDashboard() {
     },
   });
 
-  useEffect(() => {
-    if (!wallet.publicKey) return;
-    axios
-      .get(
-        `${BACKEND_URL}/user/depin/getAll?userPublicKey=${wallet.publicKey.toBase58()}`,
-        {
-          headers: { Authorization: `${localStorage.getItem("token")}` },
-        },
-      )
-      .then((r) => {
-        if (r.status === 200) setMachines(r.data);
-      })
-      .catch(console.error);
-  }, [wallet]);
+  const fetchMachines = useCallback(async () => {
+    const pubKey = wallet.publicKey?.toBase58();
+    if (!pubKey) return;
+    setLoading(true);
+    setError(false);
+    try {
+      const r = await api.get(`/user/depin/getAll?userPublicKey=${pubKey}`);
+      if (r.status === 200) setMachines(r.data);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
+  }, [wallet.publicKey]);
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Sign in to view your host dashboard
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
+  useEffect(() => {
+    fetchMachines();
+  }, [fetchMachines]);
 
   const active = machines.filter((m) => m.isActive).length;
   const totalEarned = machines.reduce((s, m) => s + m.claimedSOL, 0);
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 25% at 60% 5%, rgba(16,185,129,0.06), transparent 70%)",
-        }}
+    <div
+      className="min-h-screen bg-background pt-28 pb-40 px-6"
+      aria-live="polite"
+    >
+      <BackgroundGlow
+        color="rgba(16,185,129,0.06)"
+        size="40% 25%"
+        position="60% 5%"
       />
 
       <div className="max-w-7xl mx-auto">
-        {/* header */}
         <div className="mb-12">
           <motion.div
             initial={{ opacity: 0 }}
@@ -135,57 +151,100 @@ export function HostDashboard() {
           </div>
         </div>
 
-        {/* summary strip */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center gap-12 mb-12 pb-8 border-b border-black/[0.06] dark:border-white/[0.06]"
-        >
-          {[
-            { label: "Total machines", value: String(machines.length) },
-            { label: "Active", value: String(active), accent: active > 0 },
-            {
-              label: "Total earned",
-              value: `${totalEarned.toFixed(4)} SOL`,
-              green: true,
-            },
-          ].map((s) => (
-            <div key={s.label}>
-              <span className="text-[10px] tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 block mb-1">
-                {s.label}
-              </span>
-              <span
-                className={`text-2xl font-light font-mono tabular-nums ${s.green ? "text-emerald-500" : "text-zinc-950 dark:text-white"}`}
-              >
-                {s.value}
-              </span>
+        {timedOut && !error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24"
+          >
+            <p className="text-zinc-500 text-sm mb-6">
+              Loading is taking longer than expected. Please try again.
+            </p>
+            <Button onClick={fetchMachines}>Retry</Button>
+          </motion.div>
+        ) : error ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-24"
+          >
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-zinc-950 dark:text-white mb-2">
+              Failed to load machines
+            </h2>
+            <p className="text-zinc-500 text-sm mb-6">
+              Something went wrong while fetching your machines.
+            </p>
+            <button
+              onClick={fetchMachines}
+              className="inline-flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 hover:text-[#9945FF] transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Retry
+            </button>
+          </motion.div>
+        ) : loading ? (
+          <>
+            <SkeletonSummary />
+            <div className="border-t border-black/[0.06] dark:border-white/[0.06]">
+              {[...Array(3)].map((_, i) => (
+                <SkeletonRow key={i} />
+              ))}
             </div>
-          ))}
-        </motion.div>
+          </>
+        ) : (
+          <>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="flex items-center gap-12 mb-12 pb-8 border-b border-black/[0.06] dark:border-white/[0.06]"
+            >
+              {[
+                { label: "Total machines", value: String(machines.length) },
+                { label: "Active", value: String(active), accent: active > 0 },
+                {
+                  label: "Total earned",
+                  value: `${totalEarned.toFixed(4)} SOL`,
+                  green: true,
+                },
+              ].map((s) => (
+                <div key={s.label}>
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-zinc-400 dark:text-zinc-600 block mb-1">
+                    {s.label}
+                  </span>
+                  <span
+                    className={`text-2xl font-light font-mono tabular-nums ${s.green ? "text-emerald-500" : "text-zinc-950 dark:text-white"}`}
+                  >
+                    {s.value}
+                  </span>
+                </div>
+              ))}
+            </motion.div>
 
-        {/* table */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          {machines.length === 0 ? (
-            <div className="py-24 text-center">
-              <p className="text-sm text-zinc-400 dark:text-zinc-600 mb-4">
-                No machines registered yet.
-              </p>
-              <button
-                onClick={() => navigate("/depin/register")}
-                className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-[#9945FF] transition-colors"
-              >
-                Register your first machine →
-              </button>
-            </div>
-          ) : (
-            <DashboardTable machines={machines} setMachines={setMachines} />
-          )}
-        </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              {machines.length === 0 ? (
+                <div className="py-24 text-center">
+                  <p className="text-sm text-zinc-400 dark:text-zinc-600 mb-4">
+                    No machines registered yet.
+                  </p>
+                  <button
+                    onClick={() => navigate("/depin/register")}
+                    className="text-sm text-zinc-700 dark:text-zinc-300 hover:text-[#9945FF] transition-colors"
+                  >
+                    Register your first machine →
+                  </button>
+                </div>
+              ) : (
+                <DashboardTable machines={machines} setMachines={setMachines} />
+              )}
+            </motion.div>
+          </>
+        )}
       </div>
     </div>
   );

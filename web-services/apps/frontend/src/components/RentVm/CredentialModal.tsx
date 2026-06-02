@@ -112,6 +112,7 @@ export const CredentialModal = ({
                         `ssh -i ${vmName}-key.pem axion@${finalConfig?.ipAddress}`,
                       );
                     }}
+                    aria-label="Copy SSH command"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>
@@ -140,6 +141,7 @@ export const CredentialModal = ({
                         element.click();
                         document.body.removeChild(element);
                       }}
+                      aria-label="Download private key"
                     >
                       <span className="sr-only">Download Private Key</span>
                       <Download className="h-4 w-4" />
@@ -176,6 +178,7 @@ export const CredentialModal = ({
                       onClick={() =>
                         copyToClipboard(`chmod 600 ${vmName}-key.pem`)
                       }
+                      aria-label="Copy chmod command"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -193,6 +196,7 @@ export const CredentialModal = ({
                           `ssh -i ${vmName}-key.pem axion@${finalConfig?.ipAddress}`,
                         )
                       }
+                      aria-label="Copy SSH command"
                     >
                       <Copy className="h-4 w-4" />
                     </Button>
@@ -208,6 +212,7 @@ export const CredentialModal = ({
                     onClick={() =>
                       copyToClipboard(finalConfig?.AuthToken || "")
                     }
+                    aria-label="Copy auth token"
                   >
                     <Copy className="h-4 w-4" />
                   </Button>

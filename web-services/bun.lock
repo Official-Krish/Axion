@@ -149,6 +149,7 @@
       },
       "devDependencies": {
         "@axion/db": "workspace:*",
+        "@axion/utilities": "workspace:*",
         "@types/bun": "latest",
       },
       "peerDependencies": {
@@ -164,6 +165,7 @@
       },
       "devDependencies": {
         "@types/bun": "latest",
+        "@types/minimatch": "^6.0.0",
       },
       "peerDependencies": {
         "typescript": "^5",

@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Copy, Monitor } from "lucide-react";
 import type { VM } from "types/vm";
@@ -56,6 +56,8 @@ export const Overview = ({ vm }: { vm: VM }) => {
                     size="sm"
                     onClick={() => copyToClipboard(vm.ipAddress)}
                     className="h-6 w-6 p-0 cursor-pointer"
+                    title="Copy IP address"
+                    aria-label="Copy IP address"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>
@@ -80,6 +82,8 @@ export const Overview = ({ vm }: { vm: VM }) => {
                     size="sm"
                     onClick={() => copyToClipboard(vm.VMImage?.applicationUrl)}
                     className="h-6 w-6 p-0 cursor-pointer"
+                    title="Copy application URL"
+                    aria-label="Copy application URL"
                   >
                     <Copy className="h-3 w-3" />
                   </Button>

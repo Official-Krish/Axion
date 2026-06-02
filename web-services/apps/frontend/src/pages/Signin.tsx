@@ -12,8 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Mail, ArrowRight, WalletIcon } from "lucide-react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { useNavigate } from "react-router-dom";
 import { AxionLogo } from "@/components/AxionLogo";
@@ -24,11 +23,34 @@ export function SignIn() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = "Invalid email format";
+    }
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+    return newErrors;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const validationErrors = validate();
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) {
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     if (!wallet?.adapter.connected) {
       toast.error("Please connect your wallet first.");
@@ -36,7 +58,7 @@ export function SignIn() {
       return;
     }
     try {
-      const res = await axios.post(`${BACKEND_URL}/user/login`, {
+      const res = await api.post("/user/login", {
         ...formData,
         publicKey: wallet.adapter.publicKey?.toString(),
       });
@@ -44,14 +66,14 @@ export function SignIn() {
         toast.success("Successfully signed in!");
         localStorage.setItem("token", `Bearer ${res.data.token}`);
         localStorage.setItem("email", formData.email);
-        setFormData({ email: "" });
+        setFormData({ email: "", password: "" });
         navigate("/dashboard");
       } else {
         toast.error("Failed to sign in. Please try again.");
-        console.error("Failed to sign in:", res.data);
+        /* login error handled by toast above */
       }
-    } catch (error) {
-      console.error("Error signing in:", error);
+    } catch {
+      /* toast handled by api interceptor */
     }
     setIsLoading(false);
   };
@@ -61,6 +83,7 @@ export function SignIn() {
       ...prev,
       [e.target.name]: e.target.value,
     }));
+    setErrors((prev) => ({ ...prev, [e.target.name]: "" }));
   };
 
   return (
@@ -122,7 +145,12 @@ export function SignIn() {
               )}
             </motion.div>
 
-            <motion.form onSubmit={handleSubmit} className="space-y-4">
+            <motion.form
+              onSubmit={handleSubmit}
+              role="form"
+              aria-label="Sign in form"
+              className="space-y-4"
+            >
               <div className="space-y-4">
                 <Label htmlFor="email" className="flex items-center space-x-2">
                   <Mail className="h-4 w-4" />
@@ -136,13 +164,41 @@ export function SignIn() {
                   value={formData.email}
                   onChange={handleInputChange}
                   required
-                  className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.email ? "animate-shake" : ""}`}
                 />
+                {errors.email && (
+                  <p className="text-sm text-red-500 mt-1">{errors.email}</p>
+                )}
+              </div>
+              <div className="space-y-4">
+                <Label
+                  htmlFor="password"
+                  className="flex items-center space-x-2"
+                >
+                  <span>Password</span>
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.password ? "animate-shake" : ""}`}
+                />
+                {errors.password && (
+                  <p className="text-sm text-red-500 mt-1">{errors.password}</p>
+                )}
               </div>
               <Button
                 type="submit"
                 className="w-full group cursor-pointer"
-                disabled={!formData.email || !wallet?.adapter.connected}
+                disabled={
+                  !formData.email ||
+                  !formData.password ||
+                  !wallet?.adapter.connected
+                }
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">

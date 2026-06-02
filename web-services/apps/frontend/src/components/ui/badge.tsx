@@ -32,10 +32,9 @@ function Badge({
   ...props
 }: React.ComponentProps<"span"> &
   VariantProps<typeof badgeVariants> & { asChild?: boolean }) {
-  const Comp = asChild ? Slot : "span";
+  const Comp: React.ElementType = asChild ? Slot : "span";
 
   return (
-    // @ts-expect-error Slot component has incompatible props with span
     <Comp
       data-slot="badge"
       className={cn(badgeVariants({ variant }), className)}

@@ -1,9 +1,10 @@
 import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ChevronRight, Loader2 } from "lucide-react";
+import { useLoadingTimeout } from "@/hooks/useLoadingTimeout";
+import { Button } from "@/components/ui/button";
 import type { FinalConfig, VMTypes } from "types/vm";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { calculateEscrowEndTime, calculatePrice } from "@/lib/vm";
 import { Step1 } from "@/components/RentVm/Step1";
 import { Step3 } from "@/components/RentVm/Step3";
@@ -11,13 +12,12 @@ import { NavigationButton } from "@/components/RentVm/NavigationButton";
 import { CostSummary } from "@/components/RentVm/CostSummary";
 import { CredentialModal } from "@/components/RentVm/CredentialModal";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
 import { TransferToVaultAndStartRental } from "@/lib/contract";
 
 import { Step2 } from "@/components/RentVm/Step2";
 import { StartRentalSessionWithEscrow } from "@/lib/Escrow";
+import { Skeleton } from "@/components/Skeleton";
 import { usePaymentConfirmation } from "@/lib/useIndexerEvents";
 
 export const RentVM = () => {
@@ -31,6 +31,9 @@ export const RentVM = () => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isCredentialsOpen, setIsCredentialsOpen] = useState(false);
   const [vms, setVms] = useState<VMTypes[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const timedOut = useLoadingTimeout(loading, 30000);
   const [finalConfig, setFinalConfig] = useState<FinalConfig>();
   const [paymentStatus, setPaymentStatus] = useState<
     "Pending" | "Success" | "Failed" | "not_started"
@@ -40,6 +43,23 @@ export const RentVM = () => {
   );
   const [escrowAmount, setEscrowAmount] = useState(0);
   const [currentVmId, setCurrentVmId] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (errors.disk) setErrors((prev) => ({ ...prev, disk: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [diskSize]);
+
+  useEffect(() => {
+    if (errors.duration) setErrors((prev) => ({ ...prev, duration: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [duration]);
+
+  useEffect(() => {
+    if (errors.cpu || errors.ram)
+      setErrors((prev) => ({ ...prev, cpu: "", ram: "" }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConfig]);
 
   const wallet = useAnchorWallet();
 
@@ -70,19 +90,19 @@ export const RentVM = () => {
   ];
   const [isNameAvailable, setIsNameAvailable] = useState<boolean>(false);
 
+  const fetchVMConfigs = async () => {
+    setLoading(true);
+    setError(false);
+    try {
+      const res = await api.get("/vm/getVMTypes");
+      setVms(res.data);
+    } catch {
+      setError(true);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const fetchVMConfigs = async () => {
-      try {
-        const res = await axios.get(`${BACKEND_URL}/vm/getVMTypes`, {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        });
-        setVms(res.data);
-      } catch (error) {
-        console.error("Error fetching VM configurations:", error);
-      }
-    };
     fetchVMConfigs();
   }, []);
 
@@ -92,18 +112,10 @@ export const RentVM = () => {
         return;
       }
       try {
-        const res = await axios.get(
-          `${BACKEND_URL}/vm/checkNameAvailability?name=${vmName}`,
-          {
-            headers: {
-              Authorization: `${localStorage.getItem("token")}`,
-            },
-          },
-        );
-
+        const res = await api.get(`/vm/checkNameAvailability?name=${vmName}`);
         setIsNameAvailable(res.data.available);
-      } catch (error) {
-        console.error("Error", error);
+      } catch {
+        /* toast handled by api interceptor */
       }
     };
     checkNameAvailability();
@@ -133,6 +145,20 @@ export const RentVM = () => {
   );
 
   const handlePayment = async () => {
+    const validationErrors: Record<string, string> = {};
+    if (!selectedConfig) {
+      validationErrors.cpu = "CPU configuration is required";
+      validationErrors.ram = "RAM configuration is required";
+    }
+    if (!diskSize || Number(diskSize) <= 0) {
+      validationErrors.disk = "Disk size must be greater than 0";
+    }
+    if (!duration || duration <= 0) {
+      validationErrors.duration = "Duration must be greater than 0";
+    }
+    setErrors(validationErrors);
+    if (Object.keys(validationErrors).length > 0) return;
+
     setIsConfirmOpen(false);
     setPaymentStatus("Pending");
     const id = crypto.randomUUID().substring(0, 32);
@@ -164,27 +190,19 @@ export const RentVM = () => {
               selectedVMConfig!.machineType,
               diskSize,
             );
-      const res = await axios.post(
-        `${BACKEND_URL}/vmInstance/create`,
-        {
-          id,
-          name: vmName.toLowerCase(),
-          paymentType: paymentType.toUpperCase(),
-          price:
-            paymentType === "duration" ? costPerMin * duration : escrowAmount,
-          region,
-          os,
-          diskSize: diskSize.toString(),
-          endTime: endTime,
-          machineType: selectedVMConfig?.machineType,
-          provider: "GCP", // Assuming GCP for now, can be dynamic based on selectedConfig
-        },
-        {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        },
-      );
+      const res = await api.post("/vmInstance/create", {
+        id,
+        name: vmName.toLowerCase(),
+        paymentType: paymentType.toUpperCase(),
+        price:
+          paymentType === "duration" ? costPerMin * duration : escrowAmount,
+        region,
+        os,
+        diskSize: diskSize.toString(),
+        endTime: endTime,
+        machineType: selectedVMConfig?.machineType,
+        provider: "GCP",
+      });
       if (res.status === 200) {
         setPaymentStatus("Success");
         toast.success("VM instance created successfully!", {
@@ -202,32 +220,11 @@ export const RentVM = () => {
         toast.error(`Failed to create VM instance.`, {
           position: "bottom-right",
         });
-        console.error("Failed to create VM instance:", res.data);
       }
-    } catch (error) {
-      console.error("Error creating VM instance:", error);
+    } catch {
+      setPaymentStatus("Failed");
     }
   };
-
-  if (!wallet || !localStorage.getItem("token")) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-screen flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <h1 className="text-3xl font-bold mb-4">Please SignIn</h1>
-          <p className="text-muted-foreground mb-6">
-            Please connect your wallet and ensure you are signed in to proceed.
-          </p>
-          <Link to="/signin">
-            <Button className="cursor-pointer">SignIn</Button>
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
 
   if (paymentStatus === "Pending") {
     return (
@@ -264,7 +261,10 @@ export const RentVM = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
+    <div
+      aria-live="polite"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20"
+    >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -283,7 +283,8 @@ export const RentVM = () => {
             <motion.div
               key={step.number}
               initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true, margin: "-50px" }}
               transition={{ delay: index * 0.1 }}
               className="flex items-center space-x-4"
             >
@@ -319,56 +320,123 @@ export const RentVM = () => {
         {/* Main Content */}
         <div className="lg:col-span-2">
           {/* Step 1: Configuration */}
-          {currentStep === 1 && (
-            <Step1
-              vms={vms}
-              vmName={vmName}
-              setVmName={setVmName}
-              diskSize={diskSize}
-              setDiskSize={setDiskSize}
-              region={region}
-              setRegion={setRegion}
-              os={os}
-              setOs={setOs}
-              isNameAvailable={isNameAvailable}
-              selectedVMConfig={selectedVMConfig || null}
-              setSelectedVMConfig={(config) =>
-                setSelectedConfig(config?.id || "")
-              }
-              setStep={setCurrentStep}
-              selectedConfig={selectedConfig}
-              setSelectedConfig={setSelectedConfig}
-            />
-          )}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 1 &&
+              (timedOut && !error ? (
+                <div className="text-center py-12">
+                  <p className="text-muted-foreground">
+                    Loading is taking longer than expected. Please try again.
+                  </p>
+                  <Button onClick={fetchVMConfigs} className="mt-4">
+                    Retry
+                  </Button>
+                </div>
+              ) : loading ? (
+                <div className="space-y-6">
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                    <Skeleton className="h-5 w-36 mb-4" />
+                    <Skeleton className="h-10 w-full" />
+                  </div>
+                  <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                    <Skeleton className="h-5 w-48 mb-2" />
+                    <Skeleton className="h-4 w-64 mb-4" />
+                    <div className="space-y-3">
+                      {[...Array(3)].map((_, i) => (
+                        <Skeleton key={i} className="h-16" />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                      <Skeleton className="h-5 w-24 mb-4" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                    <div className="p-6 rounded-2xl border border-border/50 bg-card/50">
+                      <Skeleton className="h-5 w-36 mb-4" />
+                      <div className="grid grid-cols-2 gap-3">
+                        {[...Array(4)].map((_, i) => (
+                          <Skeleton key={i} className="h-16" />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <Step1
+                  vms={vms}
+                  vmName={vmName}
+                  setVmName={setVmName}
+                  diskSize={diskSize}
+                  setDiskSize={setDiskSize}
+                  region={region}
+                  setRegion={setRegion}
+                  os={os}
+                  setOs={setOs}
+                  isNameAvailable={isNameAvailable}
+                  selectedVMConfig={selectedVMConfig || null}
+                  setSelectedVMConfig={(config) =>
+                    setSelectedConfig(config?.id || "")
+                  }
+                  setStep={setCurrentStep}
+                  selectedConfig={selectedConfig}
+                  setSelectedConfig={setSelectedConfig}
+                />
+              ))}
+          </motion.div>
 
           {/* Step 2: Payment Method */}
-          {currentStep === 2 && (
-            <Step2
-              selectedVMConfig={selectedVMConfig || null}
-              duration={duration}
-              paymentType={paymentType}
-              setDuration={setDuration}
-              setPaymentType={setPaymentType}
-              setEscrowAmount={setEscrowAmount}
-              escrowAmount={escrowAmount}
-              diskSize={diskSize}
-            />
-          )}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 2 && (
+              <Step2
+                selectedVMConfig={selectedVMConfig || null}
+                duration={duration}
+                paymentType={paymentType}
+                setDuration={setDuration}
+                setPaymentType={setPaymentType}
+                setEscrowAmount={setEscrowAmount}
+                escrowAmount={escrowAmount}
+                diskSize={diskSize}
+              />
+            )}
+          </motion.div>
 
-          {/* Step 2: Review */}
-          {currentStep === 3 && (
-            <Step3
-              vmName={vmName}
-              selectedVMConfig={selectedVMConfig || null}
-              diskSize={diskSize}
-              region={region}
-              os={os}
-              duration={duration}
-              paymentType={paymentType}
-              escrowAmount={escrowAmount}
-            />
-          )}
+          {/* Step 3: Review & Deploy */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+          >
+            {currentStep === 3 && (
+              <Step3
+                vmName={vmName}
+                selectedVMConfig={selectedVMConfig || null}
+                diskSize={diskSize}
+                region={region}
+                os={os}
+                duration={duration}
+                paymentType={paymentType}
+                escrowAmount={escrowAmount}
+              />
+            )}
+          </motion.div>
 
+          {Object.keys(errors).length > 0 && (
+            <div className="space-y-1 mb-4 p-3 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
+              {Object.entries(errors).map(([key, msg]) => (
+                <p key={key} className="text-sm text-red-500">
+                  {msg}
+                </p>
+              ))}
+            </div>
+          )}
           {/* Navigation Buttons */}
           <NavigationButton
             currentStep={currentStep}

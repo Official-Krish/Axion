@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { motion } from "motion/react";
+import { motion, useScroll, useTransform } from "motion/react";
 import { Link } from "react-router-dom";
 import MiniWorldMap from "./MiniWorldMap";
 
@@ -272,15 +272,21 @@ function RegionTicker() {
    Hero
    ────────────────────────────────────────────── */
 export default function HeroSection() {
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 500], [0, -80]);
+  const y2 = useTransform(scrollY, [0, 500], [0, -40]);
+  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
+
   return (
     <section className="relative min-h-screen flex flex-col bg-[#F4F2F8] dark:bg-zinc-950 overflow-hidden">
       {/* Particle field — converges toward content */}
       <ParticleField />
 
       {/* Center glow halo */}
-      <div
+      <motion.div
         className="absolute inset-0 pointer-events-none"
         style={{
+          opacity,
           background:
             "radial-gradient(ellipse 50% 45% at 50% 55%, rgba(153,69,255,0.18) 0%, rgba(244,114,182,0.06) 35%, transparent 70%)",
         }}
@@ -298,9 +304,12 @@ export default function HeroSection() {
       <div className="flex-1 flex items-center max-w-7xl mx-auto w-full px-6 lg:px-12 pt-24 pb-20 relative z-10">
         <div className="grid lg:grid-cols-12 gap-x-12 gap-y-16 items-center w-full">
           {/* Content */}
-          <div className="lg:col-span-7 relative">
+          <motion.div className="lg:col-span-7 relative" style={{ y: y2 }}>
             {/* Background node visualization */}
-            <div className="absolute inset-0 -z-10 overflow-hidden rounded-2xl">
+            <motion.div
+              className="absolute inset-0 -z-10 overflow-hidden rounded-2xl"
+              style={{ y: y1 }}
+            >
               <NodeField />
               <div
                 className="absolute inset-0 dark:hidden"
@@ -316,7 +325,7 @@ export default function HeroSection() {
                     "radial-gradient(ellipse 60% 80% at 80% 50%, transparent 40%, rgba(9,9,11,0.95) 100%)",
                 }}
               />
-            </div>
+            </motion.div>
 
             {/* Badge / pill */}
             <motion.div
@@ -474,7 +483,7 @@ export default function HeroSection() {
                 </svg>
               </Link>
             </motion.div>
-          </div>
+          </motion.div>
 
           {/* Mini world map */}
           <div className="lg:col-span-5 lg:flex justify-end hidden">

@@ -16,8 +16,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { TopUpEscrowSession } from "@/lib/Escrow";
 import { useAnchorWallet } from "@solana/wallet-adapter-react";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useTxConfirm } from "@/lib/useTxConfirm";
 import type { VM } from "types/vm";
 
@@ -48,13 +47,11 @@ export const EscrowCard = ({ vm }: { vm: VM }) => {
       watch(tx.signature, {
         onConfirmed: async () => {
           try {
-            await axios.post(
-              `${BACKEND_URL}/vm/topup`,
-              { id: vm.id, instanceId: vm.instanceId, amount },
-              {
-                headers: { Authorization: `${localStorage.getItem("token")}` },
-              },
-            );
+            await api.post("/vm/topup", {
+              id: vm.id,
+              instanceId: vm.instanceId,
+              amount,
+            });
             toast.success("Escrow topped up!", { position: "top-right" });
           } catch {
             toast.error("On-chain confirmed but backend update failed", {

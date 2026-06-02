@@ -1,14 +1,12 @@
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { useState } from "react";
 import { Form } from "@/components/DeployImage/Form";
 import { CostEstimation } from "@/components/DeployImage/CostEstimation";
-import { Link } from "react-router-dom";
-import { useWallet } from "@solana/wallet-adapter-react";
 import type { Machine } from "types/depinMachines";
 import { PaymentGateway } from "@/components/DeployImage/PaymentGateway";
 
 export function DeployApp() {
-  const wallet = useWallet();
   const [vm, setVm] = useState<Machine>();
   const [escrowAmount, setEscrowAmount] = useState(0.1);
   const [step, setStep] = useState(0);
@@ -23,36 +21,12 @@ export function DeployApp() {
     envVars: "",
   });
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-zinc-500 dark:text-zinc-500 text-sm mb-4">
-            Sign in to deploy containers
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-zinc-900 dark:text-white hover:text-[#9945FF] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 40% 5%, rgba(56,189,248,0.06), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(56,189,248,0.06)"
+        size="40% 30%"
+        position="40% 5%"
       />
 
       <div className="max-w-6xl mx-auto">
@@ -68,11 +42,16 @@ export function DeployApp() {
               DePIN · Docker Deploy
             </span>
             {/* step indicator */}
-            <div className="ml-auto flex items-center gap-3 text-[11px] font-mono">
+            <div
+              className="ml-auto flex items-center gap-3 text-[11px] font-mono"
+              role="group"
+              aria-label="Deployment steps"
+            >
               {["Configure", "Payment"].map((s, i) => (
                 <div key={s} className="flex items-center gap-2">
                   <span
                     className={`w-1.5 h-1.5 rounded-full ${step === i ? "bg-[#9945FF]" : step > i ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"}`}
+                    aria-label={`Step ${i + 1}: ${s}${step === i ? " (current)" : step > i ? " (completed)" : ""}`}
                   />
                   <span
                     className={

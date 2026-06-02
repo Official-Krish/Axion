@@ -1,12 +1,11 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { toast } from "sonner";
 import { Step1, type Step1FormData } from "@/components/DepinHosting/Step1";
 import { Step2 } from "@/components/DepinHosting/Step2";
 import { Step3 } from "@/components/DepinHosting/Step3";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
-import { Link } from "react-router-dom";
+import { api } from "@/lib/api";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { IconCheck, IconCoins, IconTrendingUp } from "@tabler/icons-react";
 
@@ -227,11 +226,10 @@ export function HostRegister() {
   const handleStep1Submit = async () => {
     setIsLoading(true);
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/register`,
-        { ...formData, userPublicKey: wallet.publicKey?.toBase58() },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/register", {
+        ...formData,
+        userPublicKey: wallet.publicKey?.toBase58(),
+      });
       if (res.status === 200) {
         setId(res.data.vm.id);
         toast.success("Machine details saved. Proceed to verification.");
@@ -251,12 +249,7 @@ export function HostRegister() {
         setIsLoading(false);
         return;
       }
-      const res = await axios.get(
-        `${BACKEND_URL}/user/depin/getById?id=${id}`,
-        {
-          headers: { Authorization: `${localStorage.getItem("token")}` },
-        },
-      );
+      const res = await api.get(`/user/depin/getById?id=${id}`);
       if (res.data.verified) {
         toast.success("Machine verified!");
         setCurrentStep(3);
@@ -269,43 +262,16 @@ export function HostRegister() {
     setIsLoading(false);
   };
 
-  if (!wallet.publicKey || !localStorage.getItem("token")) {
-    return (
-      <div
-        className="min-h-screen flex items-center justify-center"
-        style={{ background: "#080810" }}
-      >
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center"
-        >
-          <p className="text-white/40 text-sm mb-4">
-            Connect your wallet to register a machine
-          </p>
-          <Link
-            to="/signin"
-            className="text-sm text-white hover:text-[#6366F1] transition-colors"
-          >
-            Sign in →
-          </Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div
+      aria-live="polite"
       className="min-h-screen pt-24 pb-32 px-6"
       style={{ background: "#080810" }}
     >
-      {/* Subtle radial glow */}
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 35% at 50% 8%, rgba(99,102,241,0.09), transparent 70%)",
-        }}
+      <BackgroundGlow
+        color="rgba(99,102,241,0.09)"
+        size="50% 35%"
+        position="50% 8%"
       />
 
       <div className="relative max-w-[1180px] mx-auto">

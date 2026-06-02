@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
+import { ReadingProgress } from "@/components/ReadingProgress";
 import { Link } from "react-router-dom";
 
 const NAV = [
@@ -245,17 +247,16 @@ export default function Docs() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex flex-col pt-16 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 40% 30% at 20% 20%, rgba(153,69,255,0.05), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background flex flex-col pt-16">
+      <ReadingProgress />
+      <BackgroundGlow
+        color="rgba(153,69,255,0.05)"
+        size="40% 30%"
+        position="20% 20%"
       />
 
       {/* top bar */}
-      <div className="border-b border-black/[0.06] dark:border-white/[0.06] px-4 py-3 flex items-center gap-4 relative z-10 bg-[#F4F2F8]/80 dark:bg-zinc-950/80 backdrop-blur-sm">
+      <div className="border-b border-black/[0.06] dark:border-white/[0.06] px-4 py-3 flex items-center gap-4 relative z-10 bg-background/80 backdrop-blur-sm">
         <button
           onClick={() => setSidebarOpen((s) => !s)}
           className="text-zinc-400 hover:text-zinc-700 dark:hover:text-white transition-colors p-1"
@@ -296,6 +297,7 @@ export default function Docs() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search…"
+            aria-label="Search"
             className="bg-transparent text-xs text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-400 focus:outline-none flex-1 w-full"
           />
           {!search && (
@@ -392,6 +394,7 @@ export default function Docs() {
                         <button
                           onClick={() => setActive(prev.id)}
                           className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                          aria-label={`Previous: ${prev.label}`}
                         >
                           ← {prev.label}
                         </button>
@@ -402,6 +405,7 @@ export default function Docs() {
                         <button
                           onClick={() => setActive(next.id)}
                           className="text-xs text-zinc-400 dark:text-zinc-600 hover:text-zinc-900 dark:hover:text-white transition-colors flex items-center gap-1"
+                          aria-label={`Next: ${next.label}`}
                         >
                           {next.label} →
                         </button>

@@ -1,8 +1,7 @@
 import { type AnchorWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { getContract } from "./contract";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "./api";
 
 export async function getEarnedSOL(
   machineId: string,
@@ -28,12 +27,7 @@ export async function getEarnedSOL(
 export async function claimSolana(
   machineId: string,
   pubKey: string,
-  token: string,
 ): Promise<{ success: boolean; message: string }> {
-  const res = await axios.post(
-    `${BACKEND_URL}/user/depin/claimSOL`,
-    { id: machineId, pubKey },
-    { headers: { Authorization: `Bearer ${token}` } },
-  );
+  const res = await api.post("/user/depin/claimSOL", { id: machineId, pubKey });
   return res.data;
 }

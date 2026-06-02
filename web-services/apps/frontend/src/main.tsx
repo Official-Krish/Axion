@@ -20,7 +20,7 @@ createRoot(document.getElementById("root")!).render(
       <WalletProvider wallets={[]} autoConnect>
         <WalletModalProvider>
           <BrowserRouter>
-            <Toaster />
+            <Toaster richColors closeButton visibleToasts={3} />
             <Appbar />
             <App />
             <Footer />

@@ -1,26 +1,26 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { BackgroundGlow } from "@/components/BackgroundGlow";
 
 export default function Contact() {
   const [focused, setFocused] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [vals, setVals] = useState({ name: "", email: "", message: "" });
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const inputCls = (field: string) =>
-    `w-full bg-transparent border-0 border-b text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 py-3 focus:outline-none transition-colors duration-300 ${
+    `w-full bg-transparent border-0 border-b text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-600 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 transition-colors duration-300 ${
       focused === field
         ? "border-zinc-900 dark:border-white"
         : "border-black/10 dark:border-white/10"
-    }`;
+    } ${errors[field] ? "animate-shake" : ""}`;
 
   return (
-    <div className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 pt-28 pb-40 px-6 overflow-hidden">
-      <div
-        className="fixed inset-0 pointer-events-none"
-        style={{
-          background:
-            "radial-gradient(ellipse 50% 40% at 80% 30%, rgba(153,69,255,0.07), transparent 70%)",
-        }}
+    <div className="min-h-screen bg-background pt-28 pb-40 px-6">
+      <BackgroundGlow
+        color="rgba(153,69,255,0.07)"
+        size="50% 40%"
+        position="80% 30%"
       />
 
       <div className="max-w-5xl mx-auto">
@@ -118,10 +118,21 @@ export default function Contact() {
               ) : (
                 <motion.form
                   key="form"
+                  role="form"
+                  aria-label="Contact form"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   onSubmit={(e) => {
                     e.preventDefault();
+                    const newErrors: Record<string, string> = {};
+                    if (!vals.name) newErrors.name = "Name is required";
+                    if (!vals.email) newErrors.email = "Email is required";
+                    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(vals.email))
+                      newErrors.email = "Invalid email";
+                    if (!vals.message)
+                      newErrors.message = "Message is required";
+                    setErrors(newErrors);
+                    if (Object.keys(newErrors).length > 0) return;
                     setSent(true);
                   }}
                   className="space-y-8"

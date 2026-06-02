@@ -19,8 +19,7 @@ import { Button } from "../ui/button";
 import { motion } from "motion/react";
 import { Badge } from "../ui/badge";
 import { toast } from "sonner";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -91,20 +90,12 @@ export const DashboardTable = ({
       return;
     }
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/changeVisibility`,
-        {
-          id: machineId,
-          pubKey: wallet?.publicKey?.toBase58(),
-          status: !isActive,
-          Key: key,
-        },
-        {
-          headers: {
-            Authorization: `${localStorage.getItem("token")}`,
-          },
-        },
-      );
+      const res = await api.post("/user/depin/changeVisibility", {
+        id: machineId,
+        pubKey: wallet?.publicKey?.toBase58(),
+        status: !isActive,
+        Key: key,
+      });
       if (res.status === 200) {
         toast.success(
           `Machine ${!isActive ? "activated" : "deactivated"} successfully`,
@@ -118,8 +109,7 @@ export const DashboardTable = ({
         );
         setMachines(updatedMachines);
       }
-    } catch (error) {
-      console.error("Error changing machine status:", error);
+    } catch {
       toast.error("Failed to change machine status. Please try again.");
     }
   };
@@ -128,11 +118,10 @@ export const DashboardTable = ({
     if (!wallet?.publicKey) return;
     setClaimingId(machineId);
     try {
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/claimSOL`,
-        { id: machineId, pubKey: wallet.publicKey.toBase58() },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/claimSOL", {
+        id: machineId,
+        pubKey: wallet.publicKey.toBase58(),
+      });
       if (res.status === 200) {
         toast.success("Claim request submitted. Rewards will arrive shortly.");
       }

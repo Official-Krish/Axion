@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { Router } from "express";
-import { authMiddleware } from "@axion/utilities/auth";
+import { authMiddleware, logger } from "@axion/utilities";
 import { VmInstanceSchema } from "@axion/types";
 import prisma from "@axion/db";
 import { createInstance } from "../utils/createVm";
@@ -125,8 +125,8 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
       PrivateKey: transaction.privateKey,
     });
   } catch (error) {
-    console.error("Error during VM instance creation:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during VM instance creation", error);
+    fail(res, 500, "Internal server error", "VM_CREATE_FAILED");
   }
 });
 
@@ -170,8 +170,8 @@ vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
     });
     ok(res, { vmId, status });
   } catch (e) {
-    console.error("Error during VM status polling:", e);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during VM status polling", e);
+    fail(res, 500, "Internal server error", "VM_POLL_FAILED");
   }
 });
 
@@ -204,8 +204,8 @@ vmInstance.delete("/destroy", authMiddleware, async (req, res) => {
       remainingTime: remainingTime > 0 ? remainingTime : 0,
     });
   } catch (error) {
-    console.error("Error during VM instance deletion:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during VM instance deletion", error);
+    fail(res, 500, "Internal server error", "VM_DELETE_FAILED");
   }
 });
 
@@ -218,8 +218,8 @@ vmInstance.get("/getAll", authMiddleware, async (req, res) => {
     });
     ok(res, { vms });
   } catch (error) {
-    console.error("Error fetching VM instances:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VM instances", error);
+    fail(res, 500, "Internal server error", "VM_FETCH_FAILED");
   }
 });
 
@@ -241,8 +241,8 @@ vmInstance.get("/getDetails", authMiddleware, async (req, res) => {
     }
     ok(res, { vmInstance });
   } catch (error) {
-    console.error("Error fetching VM instance details:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VM instance details", error);
+    fail(res, 500, "Internal server error", "VM_DETAILS_FAILED");
   }
 });
 

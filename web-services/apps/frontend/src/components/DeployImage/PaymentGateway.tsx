@@ -13,8 +13,7 @@ import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Button } from "../ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
-import axios from "axios";
-import { BACKEND_URL } from "@/config";
+import { api } from "@/lib/api";
 import { useNavigate } from "react-router-dom";
 import type { Machine } from "types/depinMachines";
 import { StartRentalSessionWithEscrow } from "@/lib/Escrow";
@@ -87,18 +86,14 @@ export const PaymentGateway = ({
         PricePerHour > 0
           ? Math.max(1, Math.floor((escrowAmount / PricePerHour) * 60))
           : 60; // default 60 minutes if price not set
-      const res = await axios.post(
-        `${BACKEND_URL}/user/depin/deploy`,
-        {
-          ...form,
-          escrowAmount,
-          endTime,
-          VmId: vmId,
-          id,
-          ports: form.ports.split(",").map((p) => p.trim()),
-        },
-        { headers: { Authorization: `${localStorage.getItem("token")}` } },
-      );
+      const res = await api.post("/user/depin/deploy", {
+        ...form,
+        escrowAmount,
+        endTime,
+        VmId: vmId,
+        id,
+        ports: form.ports.split(",").map((p) => p.trim()),
+      });
       if (res.status === 200) {
         toast.success("Payment successful! Your VM is being deployed.");
       } else {

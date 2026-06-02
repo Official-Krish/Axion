@@ -11,18 +11,26 @@ export function ok(res: Response, data: unknown, status = 200) {
   res.status(status).json(data);
 }
 
-export function fail(res: Response, status: number, msg: string) {
-  res.status(status).json({ error: msg });
+export function fail(
+  res: Response,
+  status: number,
+  msg: string,
+  code = "ERROR",
+) {
+  res.status(status).json({
+    success: false,
+    error: { code, message: msg },
+  });
 }
 
 export async function getUserOr404(res: Response, userId?: string) {
   if (!userId) {
-    fail(res, 400, "User ID is required");
+    fail(res, 400, "User ID is required", "MISSING_USER_ID");
     return null;
   }
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
-    fail(res, 404, "User not found");
+    fail(res, 404, "User not found", "USER_NOT_FOUND");
     return null;
   }
   return user;

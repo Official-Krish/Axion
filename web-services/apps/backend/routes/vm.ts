@@ -2,7 +2,7 @@ import "dotenv/config";
 import prisma from "@axion/db";
 import { Router } from "express";
 import axios from "axios";
-import { authMiddleware } from "@axion/utilities/auth";
+import { authMiddleware, logger } from "@axion/utilities";
 import { EscrowTopUpSchema } from "@axion/types";
 import { vmQueue } from "../redis";
 import { fail, getUserOr404, ok, MINUTE_MS } from "../utils/helpers";
@@ -33,8 +33,8 @@ vm.get("/calculatePrice", authMiddleware, async (req, res) => {
     const solPrice = await getSolPrice();
     ok(res, { price: totalPrice / solPrice });
   } catch (error) {
-    console.error("Error calculating price:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error calculating price", error);
+    fail(res, 500, "Internal server error", "PRICE_CALC_FAILED");
   }
 });
 
@@ -43,8 +43,8 @@ vm.get("/getVMTypes", authMiddleware, async (req, res) => {
     const vmTypes = await prisma.vMTypes.findMany();
     ok(res, vmTypes);
   } catch (error) {
-    console.error("Error fetching VM types:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VM types", error);
+    fail(res, 500, "Internal server error", "VM_TYPES_FAILED");
   }
 });
 
@@ -60,8 +60,8 @@ vm.get("/getAll", authMiddleware, async (req, res) => {
     });
     ok(res, vms);
   } catch (error) {
-    console.error("Error fetching VMs:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error fetching VMs", error);
+    fail(res, 500, "Internal server error", "VM_FETCH_FAILED");
   }
 });
 
@@ -77,8 +77,8 @@ vm.get("/checkNameAvailability", authMiddleware, async (req, res) => {
     });
     ok(res, { available: !existingVM });
   } catch (error) {
-    console.error("Error checking name availability:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error checking name availability", error);
+    fail(res, 500, "Internal server error", "NAME_CHECK_FAILED");
   }
 });
 
@@ -140,8 +140,8 @@ vm.post("/topup", authMiddleware, async (req, res) => {
 
     ok(res, { msg: "Top up successful", vm: updatedVM });
   } catch (error) {
-    console.error("Error during top up:", error);
-    fail(res, 500, "Internal server error");
+    logger.error("Error during top up", error);
+    fail(res, 500, "Internal server error", "TOPUP_FAILED");
   }
 });
 

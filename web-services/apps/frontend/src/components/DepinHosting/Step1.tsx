@@ -260,7 +260,7 @@ function NativeSelect({
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full h-10 px-3 pr-8 rounded-[10px] text-sm appearance-none outline-none transition-all duration-150"
+        className="w-full h-10 px-3 pr-8 rounded-[10px] text-sm appearance-none outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50"
         style={{
           background: "#0D0D1A",
           border: `1px solid ${error ? "#EF4444" : "rgba(255,255,255,0.1)"}`,
@@ -489,7 +489,7 @@ export function Step1({
               value={formData.ipAddress}
               onChange={(e) => set("ipAddress", e.target.value)}
               onBlur={() => setIpTouched(true)}
-              className="w-full h-10 px-3 rounded-[10px] text-sm font-mono outline-none transition-all duration-150 text-white placeholder:text-white/20"
+              className="w-full h-10 px-3 rounded-[10px] text-sm font-mono outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 text-white placeholder:text-white/20"
               style={{
                 background: "#0D0D1A",
                 border: `1px solid ${ipError ? "#EF4444" : ipSuccess ? "#22C55E" : "rgba(255,255,255,0.1)"}`,
@@ -590,7 +590,7 @@ export function Step1({
               placeholder="Enter a secure key (min 8 characters)"
               value={formData.Key}
               onChange={(e) => set("Key", e.target.value)}
-              className="w-full h-10 px-3 pr-10 rounded-[10px] text-sm font-mono outline-none transition-all duration-150 text-white placeholder:text-white/20"
+              className="w-full h-10 px-3 pr-10 rounded-[10px] text-sm font-mono outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-ring/50 text-white placeholder:text-white/20"
               style={{
                 background: "#0D0D1A",
                 border: "1px solid rgba(255,255,255,0.1)",
