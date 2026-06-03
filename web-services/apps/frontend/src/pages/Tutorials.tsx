@@ -3,65 +3,9 @@ import { motion, useInView } from "motion/react";
 import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { ReadingProgress } from "@/components/ReadingProgress";
 import { Link } from "react-router-dom";
+import { TUTORIALS, TAG_COLOR } from "@/data/tutorials";
 
-const TUTORIALS = [
-  {
-    n: "01",
-    time: "5 min",
-    tag: "Beginner",
-    title: "Deploy your first VM",
-    desc: "Connect wallet, pick a spec, confirm SOL escrow. Your first machine is running in under 30 seconds.",
-    href: "/rent",
-  },
-  {
-    n: "02",
-    time: "3 min",
-    tag: "Beginner",
-    title: "Set up SSH access",
-    desc: "Retrieve your ephemeral key, connect via terminal. This guide walks you through the first session.",
-    href: "/docs",
-  },
-  {
-    n: "03",
-    time: "10 min",
-    tag: "Intermediate",
-    title: "Register a DePIN host node",
-    desc: "Install the verification script, register on-chain, activate your machine and watch rewards accumulate.",
-    href: "/hosting",
-  },
-  {
-    n: "04",
-    time: "7 min",
-    tag: "Intermediate",
-    title: "Deploy a Docker image",
-    desc: "Push a container to the DePIN network. Covers image selection, port mapping, and environment variables.",
-    href: "/docker/deploy",
-  },
-  {
-    n: "05",
-    time: "2 min",
-    tag: "Beginner",
-    title: "Claim earned SOL rewards",
-    desc: "Open the rewards panel, select machines with pending balance, and initiate a single claim transaction.",
-    href: "/depin/rewards",
-  },
-  {
-    n: "06",
-    time: "4 min",
-    tag: "Advanced",
-    title: "Understand the escrow contract",
-    desc: "Walk through the Anchor program logic: how funds are locked, metered, and released after session end.",
-    href: "/docs",
-  },
-];
-
-const TAG_COLOR: Record<string, string> = {
-  Beginner: "text-emerald-500",
-  Intermediate: "text-[#9945FF]",
-  Advanced: "text-amber-500",
-};
-
-function TutRow({ t, i }: { t: (typeof TUTORIALS)[0]; i: number }) {
+function TutRow({ t, i }: { t: (typeof TUTORIALS)[number]; i: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-30px" });
 
@@ -73,7 +17,7 @@ function TutRow({ t, i }: { t: (typeof TUTORIALS)[0]; i: number }) {
       transition={{ duration: 0.55, delay: i * 0.08 }}
     >
       <Link
-        to={t.href}
+        to={`/tutorials/${t.slug}`}
         className="grid md:grid-cols-12 gap-4 py-8 border-b border-black/[0.05] dark:border-white/[0.05] group"
       >
         <div className="md:col-span-1">

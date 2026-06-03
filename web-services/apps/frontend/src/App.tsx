@@ -1,7 +1,8 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup } from "motion/react";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { PageSkeleton } from "./components/PageSkeleton";
 import { RequireAuth } from "./components/RequireAuth";
 import { Dashboard } from "./pages/Dashboard";
 import { VMDetails } from "./pages/vmDetail";
@@ -15,6 +16,7 @@ import { HostDashboard } from "./pages/HostDashboard";
 import { HostMachineDetails } from "./pages/HostMachineDetails";
 import ApiReference from "./pages/ApiReference";
 import Tutorials from "./pages/Tutorials";
+import TutorialPost from "./pages/TutorialPost";
 import Status from "./pages/Status";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
@@ -45,21 +47,58 @@ const DeployApp = lazy(() =>
   import("./pages/deployImage").then((m) => ({ default: m.DeployApp })),
 );
 
+const TITLE_MAP: Record<string, string> = {
+  "/": "Axion — Decentralized Cloud Computing",
+  "/dashboard": "Dashboard — Axion",
+  "/rent": "Rent Compute — Axion",
+  "/host": "Host — Axion",
+  "/hosting": "DePIN Hosting — Axion",
+  "/signup": "Sign Up — Axion",
+  "/signin": "Sign In — Axion",
+  "/admin": "Admin — Axion",
+  "/docs": "Documentation — Axion",
+  "/api": "API Reference — Axion",
+  "/tutorials": "Tutorials — Axion",
+  "/status": "System Status — Axion",
+  "/about": "About — Axion",
+  "/blog": "Blog — Axion",
+  "/careers": "Careers — Axion",
+  "/contact": "Contact — Axion",
+  "/privacy": "Privacy Policy — Axion",
+  "/terms": "Terms of Service — Axion",
+  "/cookies": "Cookie Policy — Axion",
+  "/gdpr": "GDPR — Axion",
+  "/profile": "Profile — Axion",
+  "/billing": "Billing — Axion",
+  "/notifications": "Notifications — Axion",
+  "/faq": "FAQ — Axion",
+  "/roadmap": "Roadmap — Axion",
+  "/depin/register": "Register Host — Axion",
+  "/depin/host/dashboard": "Host Dashboard — Axion",
+  "/depin/rewards": "Claim Rewards — Axion",
+  "/docker/deploy": "Deploy App — Axion",
+  "/ssh": "Terminal — Axion",
+};
+
+function titleForPath(path: string): string {
+  if (path.startsWith("/vm/")) return "VM Details — Axion";
+  if (path.startsWith("/ssh/")) return "Terminal — Axion";
+  if (path.startsWith("/tutorials/")) return "Tutorial — Axion";
+  if (path.startsWith("/depin/machine/")) return "Host Machine — Axion";
+  if (path.startsWith("/depin/deployment/")) return "Deployment — Axion";
+  return TITLE_MAP[path] || "Axion";
+}
+
 function App() {
   const location = useLocation();
+
+  useEffect(() => {
+    document.title = titleForPath(location.pathname);
+  }, [location.pathname]);
+
   return (
     <ErrorBoundary>
-      <Suspense
-        fallback={
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="min-h-screen bg-[#F4F2F8] dark:bg-zinc-950 flex items-center justify-center"
-          >
-            <p className="text-muted-foreground">Loading...</p>
-          </motion.div>
-        }
-      >
+      <Suspense fallback={<PageSkeleton />}>
         <LayoutGroup>
           <AnimatePresence mode="wait">
             <Routes location={location} key={location.pathname}>
@@ -174,6 +213,7 @@ function App() {
               <Route path="/docs" element={<Docs />} />
               <Route path="/api" element={<ApiReference />} />
               <Route path="/tutorials" element={<Tutorials />} />
+              <Route path="/tutorials/:slug" element={<TutorialPost />} />
               <Route path="/status" element={<Status />} />
               <Route path="/about" element={<About />} />
               <Route path="/blog" element={<Blog />} />

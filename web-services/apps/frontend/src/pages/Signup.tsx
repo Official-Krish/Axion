@@ -25,7 +25,6 @@ export function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -42,11 +41,6 @@ export function SignUp() {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
     }
     return newErrors;
   };
@@ -76,7 +70,7 @@ export function SignUp() {
         });
         localStorage.setItem("token", `Bearer ${res.data.token}`);
         localStorage.setItem("email", formData.email);
-        setFormData({ name: "", email: "", password: "" });
+        setFormData({ name: "", email: "" });
         navigate("/dashboard");
       } else {
         toast.error("Failed to create account. Please try again.", {
@@ -209,16 +203,6 @@ export function SignUp() {
                 >
                   <span>Password</span>
                 </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.password ? "animate-shake" : ""}`}
-                />
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">{errors.password}</p>
                 )}
@@ -228,10 +212,7 @@ export function SignUp() {
                 type="submit"
                 className="w-full group cursor-pointer"
                 disabled={
-                  !formData.email ||
-                  !formData.name ||
-                  !formData.password ||
-                  !wallet?.connected
+                  !formData.email || !formData.name || !wallet?.connected
                 }
               >
                 {isLoading ? (
