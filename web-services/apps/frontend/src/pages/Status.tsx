@@ -1,7 +1,8 @@
+import { useEffect } from "react";
 import { motion } from "motion/react";
 import { BackgroundGlow } from "@/components/BackgroundGlow";
 import { useHealth } from "@/hooks/useHealth";
-import { useWSConnectionStatus } from "@/lib/useIndexerEvents";
+import { useWSConnectionStatus, connectWs } from "@/lib/useIndexerEvents";
 import { CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 
 type ServiceStatus = "ok" | "degraded" | "down" | "connecting";
@@ -29,6 +30,10 @@ function statusDot(status: ServiceStatus) {
 export default function Status() {
   const health = useHealth();
   const wsStatus = useWSConnectionStatus();
+
+  useEffect(() => {
+    connectWs();
+  }, []);
 
   const overall: ServiceStatus = (() => {
     if (health.error && wsStatus === "disconnected") return "down";

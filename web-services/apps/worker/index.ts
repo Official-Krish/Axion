@@ -66,7 +66,7 @@ const worker = new Worker(
     });
     logger.info(`VM instance ${instanceId} deleted and rental session ended`);
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 worker.on("completed", (job) => {
@@ -108,7 +108,7 @@ const DepinWorker = new Worker(
       data: { pdaAddress: tx.hostMachinePda.toBase58() },
     });
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 DepinWorker.on("completed", (job) => {
@@ -130,7 +130,7 @@ const changeVmStatus = new Worker(
     }
     logger.info(`Status change processed for ${id}`, { status });
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 changeVmStatus.on("completed", (job) => {
@@ -226,7 +226,7 @@ const terminateDepinVm = new Worker(
 
     logger.info(`DePIN job ${id} settled successfully`);
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 terminateDepinVm.on("completed", (job) => {
@@ -236,10 +236,19 @@ terminateDepinVm.on("failed", (job, err) => {
   logger.error(`Terminate depin VM ${job?.id} failed`, err);
 });
 
+let computeClient: InstanceType<any> | null = null;
+
+async function getInstancesClient() {
+  if (!computeClient) {
+    const { default: compute } = await import("@google-cloud/compute");
+    computeClient = new compute.InstancesClient();
+  }
+  return computeClient;
+}
+
 async function deleteInstance(zone: string, instanceId: string) {
-  const { default: compute } = await import("@google-cloud/compute");
-  const instancesClient = new compute.InstancesClient();
-  await instancesClient.delete({
+  const client = await getInstancesClient();
+  await client.delete({
     project: projectId,
     zone,
     instance: instanceId,
@@ -258,7 +267,7 @@ const claimRewardsWorker = new Worker(
     }
     logger.info(`Rewards claimed for ${id}`, { tx });
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 claimRewardsWorker.on("completed", (job) => {
@@ -279,7 +288,7 @@ const penalizeHostWorker = new Worker(
     }
     logger.info(`Host ${id} penalized`, { tx });
   },
-  { connection },
+  { connection, concurrency: 1 },
 );
 
 penalizeHostWorker.on("completed", (job) => {

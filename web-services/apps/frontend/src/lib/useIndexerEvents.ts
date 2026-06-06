@@ -43,6 +43,8 @@ export function useWSConnectionStatus(): WSConnectionState {
   return useSyncExternalStore(subscribeToState, getConnectionState);
 }
 
+export { connect as connectWs };
+
 // ── Backoff ───────────────────────────────────────────────────────────
 const BACKOFF_BASE = 1000;
 const BACKOFF_MAX = 30000;
