@@ -60,4 +60,4 @@ COPY --from=builder /app/packages/utilities ./packages/utilities
 
 WORKDIR /app/apps/worker
 
-CMD ["bun", "index.ts"]
+CMD ["bun", "dist/index.js"]

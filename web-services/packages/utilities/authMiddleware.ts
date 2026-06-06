@@ -1,5 +1,6 @@
 import type { NextFunction, Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { logger } from "./logger";
 
 declare global {
   namespace Express {
@@ -44,7 +45,10 @@ export async function authMiddleware(
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    console.error("Auth error:", error);
+    logger.error(
+      "Auth error",
+      error instanceof Error ? error : new Error(String(error)),
+    );
     if (error instanceof jwt.TokenExpiredError) {
       res.status(401).json({
         success: false,

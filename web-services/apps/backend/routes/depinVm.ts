@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { Router } from "express";
 import { authMiddleware, logger } from "@axion/utilities";
 import prisma from "@axion/db";
@@ -30,15 +31,13 @@ let wsReconnectTimer: ReturnType<typeof setTimeout> | null = null;
 function connectDepinWs() {
   ws = new WebSocket(DEPIN_WS_URL);
   ws.addEventListener("open", () => {
-    console.log("[depin-ws] Connected");
+    logger.info("[depin-ws] Connected");
     if (wsReconnectTimer) {
       clearTimeout(wsReconnectTimer);
       wsReconnectTimer = null;
     }
   });
-  ws.addEventListener("error", (err) =>
-    console.error("[depin-ws] Error:", err),
-  );
+  ws.addEventListener("error", (err) => logger.error("[depin-ws] Error", err));
   ws.addEventListener("close", () => {
     console.warn("[depin-ws] Disconnected, reconnecting in 3s...");
     wsReconnectTimer = setTimeout(connectDepinWs, 3000);
@@ -51,7 +50,7 @@ function wsSend(payload: object): boolean {
     ws.send(JSON.stringify(payload));
     return true;
   }
-  console.error("[depin-ws] Cannot send, not connected");
+  logger.error("[depin-ws] Cannot send, not connected");
   return false;
 }
 
@@ -123,7 +122,7 @@ depinVM.post("/findVM", authMiddleware, async (req, res) => {
     }
     ok(res, { message: "Deployment request sent successfully", vm: findVm });
   } catch (error) {
-    console.error("Error deploying image:", error);
+    logger.error("Error deploying image", error as Error);
     fail(res, 500, "Internal server error");
   }
 });
@@ -238,7 +237,7 @@ depinVM.post("/deploy", authMiddleware, async (req, res) => {
         try {
           await cf.createDNSRecord(id, findVm.tunnelId);
         } catch (err) {
-          console.error("Error creating DNS record:", err);
+          logger.error("Error creating DNS record", err as Error);
         }
       }
       return config;
@@ -300,7 +299,7 @@ depinVM.delete("/terminate/:id", authMiddleware, async (req, res) => {
       try {
         await cf.deleteDNSRecord(vmId);
       } catch (err) {
-        console.error("Error deleting DNS record:", err);
+        logger.error("Error deleting DNS record", err as Error);
       }
     }
 
@@ -392,7 +391,7 @@ depinVM.post("/depinVerification", async (req, res) => {
         };
         if (tokenBody.success) tunnelToken = tokenBody.result;
       } catch (err) {
-        console.error("Error fetching tunnel token:", err);
+        logger.error("Error fetching tunnel token", err as Error);
       }
     }
 
@@ -455,7 +454,7 @@ depinVM.post("/register", authMiddleware, async (req, res) => {
           },
         });
       } catch (err) {
-        console.error("Error creating Cloudflare tunnel:", err);
+        logger.error("Error creating Cloudflare tunnel", err as Error);
       }
     }
 
@@ -501,7 +500,7 @@ depinVM.post("/changeVisibility", authMiddleware, async (req, res) => {
         wsSend({ type: "end-job", jobId: "all", machineId: id, token });
       }
     } catch (e) {
-      console.error("WS send error:", e);
+      logger.error("WS send error", e as Error);
     }
 
     ok(res, { message: "VM visibility updated successfully" });
@@ -512,11 +511,14 @@ depinVM.post("/changeVisibility", authMiddleware, async (req, res) => {
 });
 
 depinVM.get("/getAll", authMiddleware, async (req, res) => {
-  const userPublicKey = req.query.userPublicKey as string;
-  if (!userPublicKey) {
+  const parsed = z
+    .object({ userPublicKey: z.string().min(1) })
+    .safeParse(req.query);
+  if (!parsed.success) {
     fail(res, 400, "User public key is required");
     return;
   }
+  const { userPublicKey } = parsed.data;
 
   try {
     const vms = await prisma.depinHostMachine.findMany({
@@ -530,11 +532,12 @@ depinVM.get("/getAll", authMiddleware, async (req, res) => {
 });
 
 depinVM.get("/getById", authMiddleware, async (req, res) => {
-  const id = req.query.id as string;
-  if (!id) {
+  const parsed = z.object({ id: z.string().min(1) }).safeParse(req.query);
+  if (!parsed.success) {
     fail(res, 400, "VM ID is required");
     return;
   }
+  const { id } = parsed.data;
 
   try {
     const vm = await prisma.depinHostMachine.findFirst({ where: { id } });

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { z } from "zod";
 import { Router } from "express";
 import { authMiddleware, logger } from "@axion/utilities";
 import { VmInstanceSchema } from "@axion/types";
@@ -131,12 +132,14 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
 });
 
 vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
-  const instanceId = req.query.instanceId as string;
-  const vmId = req.query.id as string;
-  if (!instanceId || !vmId) {
-    fail(res, 400, "ID is required");
+  const parsed = z
+    .object({ instanceId: z.string().min(1), id: z.string().min(1) })
+    .safeParse(req.query);
+  if (!parsed.success) {
+    fail(res, 400, "instanceId and id are required");
     return;
   }
+  const { instanceId, id: vmId } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findUnique({
@@ -176,13 +179,18 @@ vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
 });
 
 vmInstance.delete("/destroy", authMiddleware, async (req, res) => {
-  const instanceId = req.query.instanceId as string;
-  const vmId = req.query.vmId as string;
-  const zone = req.query.zone as string;
-  if (!instanceId || !vmId || !zone) {
-    fail(res, 400, "instance Id, VM ID, and zone are required");
+  const parsed = z
+    .object({
+      instanceId: z.string().min(1),
+      vmId: z.string().min(1),
+      zone: z.string().min(1),
+    })
+    .safeParse(req.query);
+  if (!parsed.success) {
+    fail(res, 400, "instanceId, vmId, and zone are required");
     return;
   }
+  const { instanceId, vmId, zone } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findFirst({
@@ -224,11 +232,12 @@ vmInstance.get("/getAll", authMiddleware, async (req, res) => {
 });
 
 vmInstance.get("/getDetails", authMiddleware, async (req, res) => {
-  const id = req.query.id as string;
-  if (!id) {
+  const parsed = z.object({ id: z.string().min(1) }).safeParse(req.query);
+  if (!parsed.success) {
     fail(res, 400, "VM ID is required");
     return;
   }
+  const { id } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findFirst({

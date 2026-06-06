@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { z } from "zod";
 import prisma from "@axion/db";
 import { Router } from "express";
 import axios from "axios";
@@ -16,8 +17,17 @@ const vm = Router();
 
 vm.get("/calculatePrice", authMiddleware, async (req, res) => {
   try {
-    const machineType = req.query.machineType as string;
-    const diskSize = parseInt(req.query.diskSize as string, 10);
+    const query = z
+      .object({
+        machineType: z.string().min(1),
+        diskSize: z.coerce.number().int().min(0),
+      })
+      .safeParse(req.query);
+    if (!query.success) {
+      fail(res, 400, "Invalid query parameters");
+      return;
+    }
+    const { machineType, diskSize } = query.data;
     const basePrice = await prisma.vMTypes.findFirst({
       where: { machineType },
     });
@@ -49,7 +59,12 @@ vm.get("/getVMTypes", authMiddleware, async (req, res) => {
 });
 
 vm.get("/getAll", authMiddleware, async (req, res) => {
-  const adminKey = req.query.adminKey as string;
+  const parsed = z.object({ adminKey: z.string().min(1) }).safeParse(req.query);
+  if (!parsed.success) {
+    fail(res, 400, "adminKey is required");
+    return;
+  }
+  const adminKey = parsed.data.adminKey;
   if (adminKey !== process.env.ADMIN_KEY) {
     fail(res, 403, "Forbidden");
     return;
@@ -66,11 +81,14 @@ vm.get("/getAll", authMiddleware, async (req, res) => {
 });
 
 vm.get("/checkNameAvailability", authMiddleware, async (req, res) => {
-  const name = req.query.name as string;
-  if (!name) {
+  const parsed = z
+    .object({ name: z.string().min(1).max(100) })
+    .safeParse(req.query);
+  if (!parsed.success) {
     fail(res, 400, "Name is required");
     return;
   }
+  const { name } = parsed.data;
   try {
     const existingVM = await prisma.vMInstance.findFirst({
       where: { name, status: { not: "DELETED" } },

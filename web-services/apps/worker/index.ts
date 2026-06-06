@@ -5,7 +5,7 @@ import { redisConnection as connection } from "@axion/utilities/redis";
 
 const HEALTH_PORT = Number(process.env.HEALTH_PORT || "9094");
 
-Bun.serve({
+const healthServer = Bun.serve({
   port: HEALTH_PORT,
   fetch(req) {
     const url = new URL(req.url);
@@ -297,3 +297,22 @@ penalizeHostWorker.on("completed", (job) => {
 penalizeHostWorker.on("failed", (job, err) => {
   logger.error(`Penalize host ${job?.id} failed`, err);
 });
+
+async function gracefulShutdown(signal: string) {
+  logger.info(`Received ${signal}, shutting down gracefully...`);
+  healthServer.stop();
+  await Promise.all([
+    worker.close(),
+    DepinWorker.close(),
+    changeVmStatus.close(),
+    terminateDepinVm.close(),
+    claimRewardsWorker.close(),
+    penalizeHostWorker.close(),
+  ]);
+  logger.info("All workers closed");
+  await prisma.$disconnect();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

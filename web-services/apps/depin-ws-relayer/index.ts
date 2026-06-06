@@ -3,9 +3,22 @@ import jwt, { type JwtPayload } from "jsonwebtoken";
 import prisma from "@axion/db";
 import { createQueue } from "@axion/utilities/redis";
 
-const JWT_SECRET = process.env.JWT_SECRET || "secret123";
-const HEARTBEAT_TIMEOUT_MS = 90_000; // 3 missed heartbeats (30s each)
+function log(level: string, msg: string, meta?: unknown) {
+  console.log(
+    JSON.stringify({
+      level,
+      msg,
+      ...(meta ? { meta } : {}),
+      timestamp: new Date().toISOString(),
+    }),
+  );
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
+const HEARTBEAT_TIMEOUT_MS = 90_000;
 const HEARTBEAT_CHECK_INTERVAL_MS = 30_000;
+
+if (!JWT_SECRET) throw new Error("JWT_SECRET is required");
 
 // --- Queues ---
 const penalizeQueue = createQueue("penalize-host");
@@ -22,11 +35,12 @@ interface HostConnection {
 const activeConnections = new Map<string, HostConnection>();
 
 // --- Heartbeat Checker ---
-setInterval(() => {
+let heartbeatTimer: ReturnType<typeof setInterval>;
+heartbeatTimer = setInterval(() => {
   const now = Date.now();
   for (const [id, conn] of activeConnections) {
     if (now - conn.lastHeartbeat > HEARTBEAT_TIMEOUT_MS) {
-      console.log(`[heartbeat] Host ${id} timed out, penalizing...`);
+      log("info", `[heartbeat] Host ${id} timed out, penalizing...`);
       handleHostTimeout(id, conn);
     }
   }
@@ -45,7 +59,9 @@ async function handleHostTimeout(machineId: string, conn: HostConnection) {
     });
     conn.ws.close(4001, "Heartbeat timeout");
   } catch (err) {
-    console.error(`[heartbeat] Error penalizing ${machineId}:`, err);
+    log("error", `[heartbeat] Error penalizing ${machineId}`, {
+      error: (err as Error).message,
+    });
   }
 }
 
@@ -71,7 +87,7 @@ interface WsMessage {
 }
 
 // --- WebSocket Server ---
-Bun.serve({
+const depinServer = Bun.serve({
   port: 8080,
   fetch(req, server) {
     const url = new URL(req.url);
@@ -113,7 +129,7 @@ Bun.serve({
             break;
         }
       } catch (err) {
-        console.error("[ws] Error:", err);
+        log("error", "[ws] Error", { error: (err as Error).message });
         ws.send(JSON.stringify({ type: "error", message: "Internal error" }));
       }
     },
@@ -133,9 +149,11 @@ Bun.serve({
           prisma.depinHostMachine
             .update({ where: { id }, data: { isActive: false } })
             .catch((err) =>
-              console.error(`[close] Error deactivating ${id}:`, err),
+              log("error", `[close] Error deactivating ${id}`, {
+                error: (err as Error).message,
+              }),
             );
-          console.log(`[close] Host ${id} disconnected`);
+          log("info", `[close] Host ${id} disconnected`);
           break;
         }
       }
@@ -143,7 +161,7 @@ Bun.serve({
   },
 });
 
-console.log("[depin-ws-relayer] Running on port 8080");
+log("info", "[depin-ws-relayer] Running on port 8080");
 
 // --- Handlers ---
 
@@ -169,7 +187,7 @@ async function handleSubscribe(ws: ServerWebSocket<unknown>, data: WsMessage) {
     data: { isActive: true },
   });
 
-  console.log(`[subscribe] Host ${id} connected`);
+  log("info", `[subscribe] Host ${id} connected`);
   ws.send(JSON.stringify({ type: "subscribed", machineId: id }));
 }
 
@@ -189,7 +207,7 @@ async function handleUnsubscribe(data: WsMessage) {
       userPubKey: payload.userPublicKey,
       status: false,
     });
-    console.log(`[unsubscribe] Host ${payload.id} unsubscribed`);
+    log("info", `[unsubscribe] Host ${payload.id} unsubscribed`);
   }
 }
 
@@ -262,7 +280,9 @@ async function handleStatus(data: WsMessage) {
       data: { status: data.status },
     });
   } catch (err) {
-    console.error(`[status] Error updating job ${data.jobId}:`, err);
+    log("error", `[status] Error updating job ${data.jobId}`, {
+      error: (err as Error).message,
+    });
   }
 }
 
@@ -272,7 +292,7 @@ function verifyHostToken(
   token: string,
 ): { id: string; userPublicKey: string } | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (!decoded?.id || !decoded?.userPublicKey) return null;
     return { id: decoded.id, userPublicKey: decoded.userPublicKey };
   } catch {
@@ -282,9 +302,26 @@ function verifyHostToken(
 
 function verifyUserToken(token: string): boolean {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     return !!(decoded?.id && decoded?.machineId);
   } catch {
     return false;
   }
 }
+
+function gracefulShutdown(signal: string) {
+  log(
+    "info",
+    `[depin-ws-relayer] Received ${signal}, shutting down gracefully...`,
+  );
+  clearInterval(heartbeatTimer);
+  for (const [, conn] of activeConnections) {
+    conn.ws.close(1001, "Server shutting down");
+  }
+  activeConnections.clear();
+  depinServer.stop();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

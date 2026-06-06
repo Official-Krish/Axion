@@ -23,4 +23,7 @@ export {
   indexerLimiter,
   healthLimiter,
   depinVerificationLimiter,
+  deployLimiter,
+  registerLimiter,
+  claimSOLLimiter,
 } from "./rateLimiter";
