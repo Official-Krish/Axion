@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: axion-frontend
-          image: krishanand01/axion-frontend:v1.2.11
+          image: krishanand01/axion-frontend:v1.2.13
           ports:
             - containerPort: 80
           livenessProbe:
@@ -79,7 +79,7 @@ spec:
     spec:
       containers:
         - name: axion-backend
-          image: krishanand01/axion-backend:v1.2.11
+          image: krishanand01/axion-backend:v1.2.13
           ports:
             - containerPort: 3000
           livenessProbe:
@@ -144,7 +144,7 @@ spec:
     spec:
       containers:
         - name: axion-indexer
-          image: krishanand01/axion-indexer:v1.0
+          image: krishanand01/axion-indexer:v1.2.13
           resources:
             requests:
               cpu: "5m"
@@ -186,7 +186,7 @@ spec:
     spec:
       containers:
         - name: axion-worker
-          image: krishanand01/axion-worker:v1.2.11
+          image: krishanand01/axion-worker:v1.2.13
           ports:
             - containerPort: 9094
           livenessProbe:
@@ -249,7 +249,7 @@ spec:
     spec:
       containers:
         - name: axion-ws-relayer
-          image: krishanand01/axion-ws-relayer:v1.2.11
+          image: krishanand01/axion-ws-relayer:v1.2.13
           ports:
             - containerPort: 9093
           livenessProbe:
@@ -307,7 +307,7 @@ spec:
     spec:
       containers:
         - name: axion-depin-ws-relayer
-          image: krishanand01/axion-depin-ws-relayer:v1.2.11
+          image: krishanand01/axion-depin-ws-relayer:v1.2.13
           ports:
             - containerPort: 8080
           livenessProbe:
