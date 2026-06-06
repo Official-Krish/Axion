@@ -1,17 +1,7 @@
 import { Worker } from "bullmq";
-import compute from "@google-cloud/compute";
 import prisma from "@axion/db";
 import { logger } from "@axion/utilities";
 import { redisConnection as connection } from "@axion/utilities/redis";
-import {
-  activateHost,
-  claimRewards,
-  deActivateHost,
-  endRentalSession,
-  InitialiseHostPDA,
-  penalizeHost,
-  settleDepinJob,
-} from "./contract";
 
 const HEALTH_PORT = Number(process.env.HEALTH_PORT || "9094");
 
@@ -33,11 +23,25 @@ const projectId = process.env.PROJECT_ID;
 const PLATFORM_VAULT_PUBKEY = process.env.PLATFORM_VAULT_PUBKEY || "";
 const PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS || "1000");
 
-const ws = new WebSocket(process.env.WS_URL || "ws://localhost:8080");
+const WS_URL = process.env.WS_URL || "ws://localhost:8080";
+
+let ws: WebSocket | undefined;
+let contractModulePromise: Promise<typeof import("./contract")> | undefined;
+
+function getContractModule() {
+  contractModulePromise ??= import("./contract");
+  return contractModulePromise;
+}
+
+function getWebSocket() {
+  ws ??= new WebSocket(WS_URL);
+  return ws;
+}
 
 const worker = new Worker(
   "vm-termination",
   async (job) => {
+    const { endRentalSession } = await getContractModule();
     logger.info(`Processing job ${job.id} for VM instance`, {
       vmId: job.data.vmId,
     });
@@ -76,6 +80,7 @@ worker.on("failed", (job, err) => {
 const DepinWorker = new Worker(
   "initialise-host-pda",
   async (job) => {
+    const { InitialiseHostPDA } = await getContractModule();
     const {
       id,
       hostName,
@@ -116,6 +121,7 @@ DepinWorker.on("failed", (job, err) => {
 const changeVmStatus = new Worker(
   "changeVMStatus",
   async (job) => {
+    const { activateHost, deActivateHost } = await getContractModule();
     const { id, userPubKey, status } = job.data;
     if (status === false) {
       await deActivateHost(id, userPubKey);
@@ -137,6 +143,7 @@ changeVmStatus.on("failed", (job, err) => {
 const terminateDepinVm = new Worker(
   "terminate-depin-vm",
   async (job) => {
+    const { settleDepinJob } = await getContractModule();
     const { pubKey, id } = job.data;
     const findVm = await prisma.depinHostMachine.findFirst({
       where: { id },
@@ -162,7 +169,7 @@ const terminateDepinVm = new Worker(
       return;
     }
 
-    ws.send(
+    getWebSocket().send(
       JSON.stringify({
         type: "end-job",
         machineId: findVm.id,
@@ -230,6 +237,7 @@ terminateDepinVm.on("failed", (job, err) => {
 });
 
 async function deleteInstance(zone: string, instanceId: string) {
+  const { default: compute } = await import("@google-cloud/compute");
   const instancesClient = new compute.InstancesClient();
   await instancesClient.delete({
     project: projectId,
@@ -242,6 +250,7 @@ async function deleteInstance(zone: string, instanceId: string) {
 const claimRewardsWorker = new Worker(
   "claim-rewards",
   async (job) => {
+    const { claimRewards } = await getContractModule();
     const { id, userPubKey } = job.data;
     const tx = await claimRewards(id, userPubKey);
     if (!tx) {
@@ -262,6 +271,7 @@ claimRewardsWorker.on("failed", (job, err) => {
 const penalizeHostWorker = new Worker(
   "penalize-host",
   async (job) => {
+    const { penalizeHost } = await getContractModule();
     const { id, userPubKey } = job.data;
     const tx = await penalizeHost(id, userPubKey);
     if (!tx) {
