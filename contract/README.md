@@ -2,7 +2,7 @@
 
 Anchor framework program managing VM rental sessions, escrow payments, and DePIN host registration.
 
-**Program ID (devnet):** `J7nyNjMR7p9Xi8ohzkNAFmnAeVUBb1AMpGKTFGtFvVjJ`
+**Program ID (devnet):** `BD8qpWm9WWLcqQu5PKJ3Lew4BZ6nh6n96FMZv3DJ54sc`
 
 ## Instructions
 

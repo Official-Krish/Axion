@@ -32,7 +32,7 @@ impl Config {
             grpc_endpoint: env::var("GRPC_ENDPOINT")
                 .unwrap_or_else(|_| "http://127.0.0.1:10000".to_string()),
             program_id: env::var("PROGRAM_ID")
-                .unwrap_or_else(|_| "J7nyNjMR7p9Xi8ohzkNAFmnAeVUBb1AMpGKTFGtFvVjJ".to_string()),
+                .unwrap_or_else(|_| "BD8qpWm9WWLcqQu5PKJ3Lew4BZ6nh6n96FMZv3DJ54sc".to_string()),
             backend_webhook_url: env::var("BACKEND_WEBHOOK_URL")
                 .unwrap_or_else(|_| "http://localhost:3000/api/v2/indexer/webhook".to_string()),
             ws_relayer_url: env::var("WS_RELAYER_URL")
