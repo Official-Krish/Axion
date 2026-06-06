@@ -16,7 +16,7 @@ export function useHealth() {
     async function fetchHealth() {
       const start = performance.now();
       try {
-        const res = await api.get("/health");
+        const res = await api.get("/ready");
         setLatency(Math.round(performance.now() - start));
         setData(res.data as HealthCheckResponse);
         setError(false);

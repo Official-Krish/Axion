@@ -8,7 +8,6 @@ import {
   publicLimiter,
   authLimiter,
   indexerLimiter,
-  healthLimiter,
   depinVerificationLimiter,
   deployLimiter,
   registerLimiter,
@@ -51,14 +50,14 @@ app.use("/api/v2/user/depin/register", registerLimiter);
 app.use("/api/v2/user/depin/claimSOL", claimSOLLimiter);
 app.use("/api/v2/indexer", indexerLimiter);
 
-app.use("/api/v2/user", UserRouter);
-app.use("/api/v2/vmInstance", vmInstance);
-app.use("/api/v2/vm", vm);
-app.use("/api/v2/user/depin", depinVM);
-app.use("/api/v2/indexer", indexerRouter);
-app.use("/api/v2/health", healthLimiter);
+app.get("/api/v2/health", (_req: Request, res: Response) => {
+  res.json({
+    status: "alive",
+    uptime: Math.floor((Date.now() - startTime) / 1000),
+  });
+});
 
-app.get("/api/v2/health", async (_req: Request, res: Response) => {
+app.get("/api/v2/ready", async (_req: Request, res: Response) => {
   let dbStatus: "connected" | "error" = "connected";
   let redisStatus: "connected" | "error" = "connected";
 
@@ -77,7 +76,7 @@ app.get("/api/v2/health", async (_req: Request, res: Response) => {
   const allOk = dbStatus === "connected" && redisStatus === "connected";
   const status = allOk ? "ok" : "degraded";
 
-  res.json({
+  res.status(allOk ? 200 : 503).json({
     status,
     uptime: Math.floor((Date.now() - startTime) / 1000),
     timestamp: new Date().toISOString(),
@@ -85,6 +84,12 @@ app.get("/api/v2/health", async (_req: Request, res: Response) => {
     services: { database: dbStatus, redis: redisStatus },
   });
 });
+
+app.use("/api/v2/user", UserRouter);
+app.use("/api/v2/vmInstance", vmInstance);
+app.use("/api/v2/vm", vm);
+app.use("/api/v2/user/depin", depinVM);
+app.use("/api/v2/indexer", indexerRouter);
 
 app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   logger.error("Unhandled route error", err);

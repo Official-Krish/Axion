@@ -82,19 +82,27 @@ spec:
           image: krishanand01/axion-backend:v1.2.13
           ports:
             - containerPort: 3000
+          startupProbe:
+            httpGet:
+              path: /api/v2/health
+              port: 3000
+            failureThreshold: 30
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/v2/health
               port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 30
+            timeoutSeconds: 5
+            periodSeconds: 15
             failureThreshold: 3
           readinessProbe:
             httpGet:
-              path: /api/v2/health
+              path: /api/v2/ready
               port: 3000
-            initialDelaySeconds: 5
-            periodSeconds: 10
+            initialDelaySeconds: 10
+            timeoutSeconds: 5
+            periodSeconds: 15
             failureThreshold: 3
           resources:
             requests:
