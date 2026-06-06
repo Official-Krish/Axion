@@ -1,6 +1,7 @@
 import type { Response } from "express";
 import type { ZodError } from "zod";
 import { AppError, ValidationError } from "./errors";
+import { logger } from "./logger";
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -24,7 +25,10 @@ export function sendError(res: Response, err: unknown) {
     } satisfies ApiResponse);
     return;
   }
-  console.error("Unhandled error:", err);
+  logger.error(
+    "Unhandled error",
+    err instanceof Error ? err : new Error(String(err)),
+  );
   res.status(500).json({
     success: false,
     error: { code: "INTERNAL_ERROR", message: "Internal server error" },

@@ -9,6 +9,7 @@ import { AnchorProvider, Program, type Idl } from "@coral-xyz/anchor";
 import { existsSync, readFileSync } from "node:fs";
 import bs58 from "bs58";
 import BN from "bn.js";
+import { logger } from "@axion/utilities";
 import fallbackIdl from "./contractIdl";
 
 const connection = new Connection(clusterApiUrl("devnet"));
@@ -94,7 +95,7 @@ export async function endRentalSession(
       return tx;
     }
   } catch (error) {
-    console.error("Error ending rental session:", error);
+    logger.error("Error ending rental session", error as Error);
     throw error;
   }
 }
@@ -132,7 +133,7 @@ export async function InitialiseHostPDA(
     await connection.confirmTransaction(tx);
     return { hostMachinePda };
   } catch (error) {
-    console.error("Error initializing host PDA:", error);
+    logger.error("Error initializing host PDA", error as Error);
     throw error;
   }
 }
@@ -154,7 +155,7 @@ export async function deActivateHost(
     await connection.confirmTransaction(tx);
     return tx;
   } catch (error) {
-    console.error("Error deactivating host:", error);
+    logger.error("Error deactivating host", error as Error);
     throw error;
   }
 }
@@ -176,7 +177,7 @@ export async function activateHost(
     await connection.confirmTransaction(tx);
     return tx;
   } catch (error) {
-    console.error("Error activating host:", error);
+    logger.error("Error activating host", error as Error);
     throw error;
   }
 }
@@ -200,7 +201,7 @@ export async function claimRewards(
     await connection.confirmTransaction(tx);
     return tx;
   } catch (error) {
-    console.error("Error claiming rewards:", error);
+    logger.error("Error claiming rewards", error as Error);
     throw error;
   }
 }
@@ -235,7 +236,7 @@ export async function settleDepinJob(
     await connection.confirmTransaction(tx);
     return tx;
   } catch (error) {
-    console.error("Error settling DePIN job:", error);
+    logger.error("Error settling DePIN job", error as Error);
     throw error;
   }
 }
@@ -257,7 +258,7 @@ export async function penalizeHost(
     await connection.confirmTransaction(tx);
     return tx;
   } catch (error) {
-    console.error("Error penalizing host:", error);
+    logger.error("Error penalizing host", error as Error);
     throw error;
   }
 }

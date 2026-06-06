@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import type { NextFunction, Request, Response } from "express";
+import type { Server } from "http";
 import { sendError, logger } from "@axion/utilities";
 import { redisConnection } from "@axion/utilities/redis";
 import {
@@ -9,6 +10,9 @@ import {
   indexerLimiter,
   healthLimiter,
   depinVerificationLimiter,
+  deployLimiter,
+  registerLimiter,
+  claimSOLLimiter,
 } from "@axion/utilities/rateLimiter";
 import prisma from "@axion/db";
 import UserRouter from "./routes/user";
@@ -36,12 +40,16 @@ app.use(cors());
 
 app.use("/api/v2/user/signup", publicLimiter);
 app.use("/api/v2/user/login", publicLimiter);
-app.use("/api/v2/user/depin/depinVerification", depinVerificationLimiter);
-app.use("/api/v2/indexer", indexerLimiter);
-app.use("/api/v2/user", authLimiter);
+app.use("/api/v2/user/me", authLimiter);
+app.use("/api/v2/user/checkTimeout", authLimiter);
 app.use("/api/v2/vmInstance", authLimiter);
 app.use("/api/v2/vm", authLimiter);
 app.use("/api/v2/user/depin", authLimiter);
+app.use("/api/v2/user/depin/depinVerification", depinVerificationLimiter);
+app.use("/api/v2/user/depin/deploy", deployLimiter);
+app.use("/api/v2/user/depin/register", registerLimiter);
+app.use("/api/v2/user/depin/claimSOL", claimSOLLimiter);
+app.use("/api/v2/indexer", indexerLimiter);
 
 app.use("/api/v2/user", UserRouter);
 app.use("/api/v2/vmInstance", vmInstance);
@@ -83,6 +91,24 @@ app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   sendError(res, err);
 });
 
-app.listen(3000, () => {
+const server: Server = app.listen(3000, () => {
   logger.info("Backend server started", { port: 3000 });
 });
+
+function gracefulShutdown(signal: string) {
+  logger.info(`Received ${signal}, shutting down gracefully...`);
+  server.close(() => {
+    logger.info("HTTP server closed");
+    prisma.$disconnect().finally(() => {
+      redisConnection.quit();
+      process.exit(0);
+    });
+  });
+  setTimeout(() => {
+    logger.error("Forced shutdown after timeout");
+    process.exit(1);
+  }, 10_000);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));

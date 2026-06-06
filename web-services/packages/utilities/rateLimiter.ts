@@ -60,3 +60,21 @@ export const depinVerificationLimiter = createRateLimiter({
   max: 30,
   message: "Too many verification requests, please try again later",
 });
+
+export const deployLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 10,
+  message: "Too many deploy requests, please try again later",
+});
+
+export const registerLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 5,
+  message: "Too many registration requests, please try again later",
+});
+
+export const claimSOLLimiter = createRateLimiter({
+  windowMs: 60_000,
+  max: 3,
+  message: "Too many claim requests, please try again later",
+});

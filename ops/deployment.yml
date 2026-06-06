@@ -25,6 +25,20 @@ spec:
           image: krishanand01/axion-frontend:v1.2.11
           ports:
             - containerPort: 80
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "5m"
@@ -68,6 +82,20 @@ spec:
           image: krishanand01/axion-backend:v1.2.11
           ports:
             - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /api/v2/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v2/health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "5m"
@@ -159,13 +187,29 @@ spec:
       containers:
         - name: axion-worker
           image: krishanand01/axion-worker:v1.2.11
+          ports:
+            - containerPort: 9094
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9094
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9094
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "5m"
               memory: "32Mi"
             limits:
               cpu: "100m"
-              memory: "512Mi"
+              memory: "1Gi"
           volumeMounts:
             - name: env-file
               mountPath: /app/apps/worker/.env
@@ -208,6 +252,20 @@ spec:
           image: krishanand01/axion-ws-relayer:v1.2.11
           ports:
             - containerPort: 9093
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 9093
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 9093
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "5m"
@@ -252,6 +310,20 @@ spec:
           image: krishanand01/axion-depin-ws-relayer:v1.2.11
           ports:
             - containerPort: 8080
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
           resources:
             requests:
               cpu: "5m"
@@ -289,6 +361,18 @@ spec:
         image: redis:7-alpine
         ports:
         - containerPort: 6379
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          failureThreshold: 3
         volumeMounts:
         - name: redis-data
           mountPath: /data

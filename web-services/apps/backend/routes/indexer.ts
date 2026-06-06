@@ -33,24 +33,20 @@ interface IndexerEvent {
 router.post("/webhook", async (req: Request, res: Response) => {
   const token = req.headers["x-indexer-token"];
   if (token !== INDEXER_TOKEN) {
-    res
-      .status(401)
-      .json({
-        success: false,
-        error: { code: "UNAUTHORIZED", message: "Unauthorized" },
-      });
+    res.status(401).json({
+      success: false,
+      error: { code: "UNAUTHORIZED", message: "Unauthorized" },
+    });
     return;
   }
 
   const event: IndexerEvent = req.body;
 
   if (!event.instruction || !event.signature) {
-    res
-      .status(400)
-      .json({
-        success: false,
-        error: { code: "INVALID_PAYLOAD", message: "Invalid event payload" },
-      });
+    res.status(400).json({
+      success: false,
+      error: { code: "INVALID_PAYLOAD", message: "Invalid event payload" },
+    });
     return;
   }
 
@@ -59,7 +55,7 @@ router.post("/webhook", async (req: Request, res: Response) => {
     return;
   }
 
-  console.log(
+  logger.info(
     `[Indexer] ${event.instruction} | sig=${event.signature.slice(0, 16)}... | success=${event.success} | args=${JSON.stringify(event.args)}`,
   );
 
@@ -73,12 +69,10 @@ router.post("/webhook", async (req: Request, res: Response) => {
     res.status(200).json({ received: true });
   } catch (error) {
     logger.error(`[Indexer] Error handling ${event.instruction}`, error);
-    res
-      .status(500)
-      .json({
-        success: false,
-        error: { code: "INDEXER_ERROR", message: "Failed to process event" },
-      });
+    res.status(500).json({
+      success: false,
+      error: { code: "INDEXER_ERROR", message: "Failed to process event" },
+    });
   }
 });
 
@@ -177,61 +171,40 @@ async function handleInstruction(event: IndexerEvent) {
       const diskSize = args?.disk_size as number;
       const solPerHour = args?.sol_per_hour as number;
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: userPubKey },
+        data: { pdaAddress: accounts[2] },
       });
-
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { pdaAddress: accounts[2] },
-        });
-      }
       break;
     }
 
     case "activate_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: true },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: true },
-        });
-      }
       break;
     }
 
     case "deactivate_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: false },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: false },
-        });
-      }
       break;
     }
 
     case "penalize_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: false, verified: false },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: false, verified: false },
-        });
-      }
       break;
     }
 
@@ -244,7 +217,7 @@ async function handleInstruction(event: IndexerEvent) {
     }
 
     default:
-      console.log(`[Indexer] Unhandled: ${instruction}`);
+      logger.info(`[Indexer] Unhandled: ${instruction}`);
   }
 }
 

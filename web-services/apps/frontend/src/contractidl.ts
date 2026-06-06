@@ -1,7 +1,7 @@
 import type { Idl } from "@coral-xyz/anchor";
 
 export const idl = {
-  address: "J7nyNjMR7p9Xi8ohzkNAFmnAeVUBb1AMpGKTFGtFvVjJ",
+  address: "BD8qpWm9WWLcqQu5PKJ3Lew4BZ6nh6n96FMZv3DJ54sc",
   metadata: {
     name: "contract",
     version: "0.1.0",

@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { z } from "zod";
 import { Router } from "express";
 import { authMiddleware, logger } from "@axion/utilities";
 import { VmInstanceSchema } from "@axion/types";
@@ -26,8 +27,14 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
     return;
   }
 
-  const user = await getUserOr404(res, req.userId);
-  if (!user) return;
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { timeoutAt: true, publicKey: true },
+  });
+  if (!user) {
+    fail(res, 404, "User not found");
+    return;
+  }
 
   if (user.timeoutAt) {
     const elapsed = Date.now() - new Date(user.timeoutAt).getTime();
@@ -54,6 +61,7 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
 
     const existingVm = await prisma.vMInstance.findFirst({
       where: { name, userId: req.userId, status: { not: "DELETED" } },
+      select: { id: true },
     });
     if (existingVm) {
       fail(res, 409, "VM with this name already exists");
@@ -131,16 +139,19 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
 });
 
 vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
-  const instanceId = req.query.instanceId as string;
-  const vmId = req.query.id as string;
-  if (!instanceId || !vmId) {
-    fail(res, 400, "ID is required");
+  const parsed = z
+    .object({ instanceId: z.string().min(1), id: z.string().min(1) })
+    .safeParse(req.query);
+  if (!parsed.success) {
+    fail(res, 400, "instanceId and id are required");
     return;
   }
+  const { instanceId, id: vmId } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findUnique({
       where: { id: vmId, instanceId },
+      select: { instanceId: true, region: true },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");
@@ -176,17 +187,23 @@ vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
 });
 
 vmInstance.delete("/destroy", authMiddleware, async (req, res) => {
-  const instanceId = req.query.instanceId as string;
-  const vmId = req.query.vmId as string;
-  const zone = req.query.zone as string;
-  if (!instanceId || !vmId || !zone) {
-    fail(res, 400, "instance Id, VM ID, and zone are required");
+  const parsed = z
+    .object({
+      instanceId: z.string().min(1),
+      vmId: z.string().min(1),
+      zone: z.string().min(1),
+    })
+    .safeParse(req.query);
+  if (!parsed.success) {
+    fail(res, 400, "instanceId, vmId, and zone are required");
     return;
   }
+  const { instanceId, vmId, zone } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findFirst({
       where: { id: vmId, instanceId },
+      select: { endTime: true },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");
@@ -213,7 +230,20 @@ vmInstance.get("/getAll", authMiddleware, async (req, res) => {
   try {
     const vms = await prisma.vMInstance.findMany({
       where: { userId: req.userId },
-      include: { VMConfig: true, VMImage: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        ipAddress: true,
+        price: true,
+        region: true,
+        startTime: true,
+        endTime: true,
+        provider: true,
+        instanceId: true,
+        VMConfig: { select: { os: true, machineType: true, diskSize: true } },
+        VMImage: { select: { applicationUrl: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
     ok(res, { vms });
@@ -224,16 +254,44 @@ vmInstance.get("/getAll", authMiddleware, async (req, res) => {
 });
 
 vmInstance.get("/getDetails", authMiddleware, async (req, res) => {
-  const id = req.query.id as string;
-  if (!id) {
+  const parsed = z.object({ id: z.string().min(1) }).safeParse(req.query);
+  if (!parsed.success) {
     fail(res, 400, "VM ID is required");
     return;
   }
+  const { id } = parsed.data;
 
   try {
     const vmInstance = await prisma.vMInstance.findFirst({
       where: { id },
-      include: { VMConfig: true, VMImage: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        ipAddress: true,
+        price: true,
+        region: true,
+        startTime: true,
+        endTime: true,
+        provider: true,
+        instanceId: true,
+        publicKey: true,
+        jobId: true,
+        VMConfig: { select: { os: true, machineType: true, diskSize: true } },
+        VMImage: {
+          select: {
+            name: true,
+            description: true,
+            dockerImage: true,
+            cpu: true,
+            ram: true,
+            diskSize: true,
+            os: true,
+            applicationUrl: true,
+            applicationPort: true,
+          },
+        },
+      },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");

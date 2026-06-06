@@ -3,6 +3,17 @@ import { Client as SSHClient } from "ssh2";
 import { type JwtPayload } from "jsonwebtoken";
 import jwt from "jsonwebtoken";
 
+function log(level: string, msg: string, meta?: unknown) {
+  console.log(
+    JSON.stringify({
+      level,
+      msg,
+      ...(meta ? { meta } : {}),
+      timestamp: new Date().toISOString(),
+    }),
+  );
+}
+
 interface Session {
   userId: string;
   allowedVM: string;
@@ -40,10 +51,13 @@ type incomingMessage = {
 
 const SSH_READY_TIMEOUT_MS = 10000;
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-const INDEXER_TOKEN = process.env.INDEXER_TOKEN || "changeme";
+const JWT_SECRET = process.env.JWT_SECRET;
+const INDEXER_TOKEN = process.env.INDEXER_TOKEN;
 
-Bun.serve({
+if (!JWT_SECRET) throw new Error("JWT_SECRET is required");
+if (!INDEXER_TOKEN) throw new Error("INDEXER_TOKEN is required");
+
+const server = Bun.serve({
   fetch(req, server) {
     const url = new URL(req.url);
 
@@ -67,7 +81,8 @@ Bun.serve({
             }
           }
 
-          console.log(
+          log(
+            "info",
             `[WS-Relayer] Broadcasting ${body.instruction} to ${targetClients.size} clients`,
           );
 
@@ -129,7 +144,9 @@ Bun.serve({
           disconnectFromVM(ws as ServerWebSocket<undefined>);
         }
       } catch (err) {
-        console.error("Error processing WebSocket message:", err);
+        log("error", "Error processing WebSocket message", {
+          error: (err as Error).message,
+        });
         ws.send(JSON.stringify({ type: "error", message: "Invalid JSON" }));
       }
     },
@@ -156,7 +173,7 @@ Bun.serve({
 
 function authenticateUser(ws: ServerWebSocket<undefined>, token: string) {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET!) as JwtPayload;
     if (
       !decoded ||
       !decoded.userId ||
@@ -328,3 +345,20 @@ function disconnectFromVM(ws: ServerWebSocket) {
 
   userSessions.delete(ws);
 }
+
+function gracefulShutdown(signal: string) {
+  log("info", `[ws-relayer] Received ${signal}, shutting down gracefully...`);
+  for (const ws of allClients) {
+    ws.close(1001, "Server shutting down");
+  }
+  for (const [, subs] of pubkeySubscriptions) {
+    subs.clear();
+  }
+  pubkeySubscriptions.clear();
+  allClients.clear();
+  server.stop();
+  process.exit(0);
+}
+
+process.on("SIGTERM", () => gracefulShutdown("SIGTERM"));
+process.on("SIGINT", () => gracefulShutdown("SIGINT"));
