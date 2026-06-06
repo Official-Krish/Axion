@@ -14,9 +14,11 @@
   },
   "dependencies": {
     "bullmq": "^5.46.2",
+    "express-rate-limit": "^8.5.2",
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.2",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "rate-limit-redis": "^5.0.0"
   },
   "exports": {
     ".": "./index.ts",
@@ -24,6 +26,7 @@
     "./redis": "./redis.ts",
     "./errors": "./errors.ts",
     "./response": "./response.ts",
-    "./logger": "./logger.ts"
+    "./logger": "./logger.ts",
+    "./rateLimiter": "./rateLimiter.ts"
   }
 }

@@ -13,6 +13,22 @@ import {
   settleDepinJob,
 } from "./contract";
 
+const HEALTH_PORT = Number(process.env.HEALTH_PORT || "9094");
+
+Bun.serve({
+  port: HEALTH_PORT,
+  fetch(req) {
+    const url = new URL(req.url);
+    if (req.method === "GET" && url.pathname === "/health") {
+      return Response.json({
+        status: "ok",
+        timestamp: new Date().toISOString(),
+      });
+    }
+    return new Response("Not found", { status: 404 });
+  },
+});
+
 const projectId = process.env.PROJECT_ID;
 const PLATFORM_VAULT_PUBKEY = process.env.PLATFORM_VAULT_PUBKEY || "";
 const PLATFORM_FEE_BPS = Number(process.env.PLATFORM_FEE_BPS || "1000");

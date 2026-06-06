@@ -8,9 +8,9 @@ const dotColors: Record<string, string> = {
 };
 
 const labels: Record<string, string> = {
-  connected: "Connected",
-  connecting: "Connecting…",
-  disconnected: "Disconnected",
+  connected: "Real-time events connected",
+  connecting: "Real-time events connecting…",
+  disconnected: "Real-time events disconnected",
 };
 
 export function WSConnectionDot() {
@@ -18,9 +18,9 @@ export function WSConnectionDot() {
 
   return (
     <motion.div
-      className="relative flex items-center gap-1.5"
+      className="relative"
       title={labels[status]}
-      aria-label={`WebSocket ${labels[status]}`}
+      aria-label={labels[status]}
     >
       <motion.span
         className={`block h-2 w-2 rounded-full ${dotColors[status]}`}
@@ -33,9 +33,6 @@ export function WSConnectionDot() {
             : {}
         }
       />
-      <span className="hidden lg:inline text-xs text-muted-foreground">
-        {labels[status]}
-      </span>
     </motion.div>
   );
 }

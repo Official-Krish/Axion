@@ -74,6 +74,14 @@ interface WsMessage {
 Bun.serve({
   port: 8080,
   fetch(req, server) {
+    const url = new URL(req.url);
+    if (req.method === "GET" && url.pathname === "/health") {
+      return Response.json({
+        status: "ok",
+        clients: activeConnections.size,
+        timestamp: new Date().toISOString(),
+      });
+    }
     if (server.upgrade(req)) return;
     return new Response("Upgrade failed", { status: 500 });
   },

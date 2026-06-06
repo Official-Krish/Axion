@@ -6,11 +6,7 @@ import {
   IconCircleCheck,
 } from "@tabler/icons-react";
 import { AxionLogo } from "./AxionLogo";
-
-interface SiteFooterProps {
-  systemStatus?: "operational" | "degraded" | "outage";
-  onSubscribe?: (email: string) => Promise<void>;
-}
+import { useHealth } from "@/hooks/useHealth";
 
 const linkGroups = [
   {
@@ -25,7 +21,7 @@ const linkGroups = [
     label: "Resources",
     links: [
       { name: "Documentation", href: "/docs" },
-      { name: "Api reference", href: "/api" },
+      { name: "API Reference", href: "/api" },
       { name: "Tutorials", href: "/tutorials" },
       { name: "Status", href: "/status" },
     ],
@@ -45,18 +41,21 @@ const linkGroups = [
       { name: "Privacy policy", href: "/privacy" },
       { name: "Terms of service", href: "/terms" },
       { name: "Cookie policy", href: "/cookies" },
-      { name: "Gdpr", href: "/gdpr" },
+      { name: "GDPR", href: "/gdpr" },
     ],
   },
 ];
 
 export function SiteFooter({
-  systemStatus = "operational",
   onSubscribe,
-}: SiteFooterProps) {
+}: {
+  onSubscribe?: (email: string) => Promise<void>;
+}) {
   const [email, setEmail] = useState("");
   const [subscribed, setSubscribed] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
+
+  const health = useHealth();
 
   const handleSubscribe = async () => {
     if (!email || subscribing) return;
@@ -72,6 +71,13 @@ export function SiteFooter({
       setSubscribing(false);
     }
   };
+
+  const systemStatus = (() => {
+    if (health.error) return "outage";
+    if (!health.data) return "operational";
+    if (health.data.status === "degraded") return "degraded";
+    return "operational";
+  })();
 
   const statusColors = {
     operational: { dot: "#14F195", text: "All systems operational" },
@@ -198,13 +204,26 @@ export function SiteFooter({
           </div>
         </div>
 
-        <div className="mt-8 py-5 border-t border-[rgba(255,255,255,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="mt-8 py-3 border-t border-[rgba(255,255,255,0.06)]">
+          <p className="text-[11px] text-center text-[rgba(255,255,255,0.35)]">
+            Axion is in active development. Found a bug?{" "}
+            <a
+              href="https://github.com/Official-Krish/Axion/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-2 hover:text-[rgba(255,255,255,0.4)] transition-colors"
+            >
+              Report it on GitHub Issues
+            </a>
+            .
+          </p>
+        </div>
+        <div className="py-5 border-t border-[rgba(255,255,255,0.06)] flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-[12px] text-[rgba(255,255,255,0.25)]">
             <span>© 2026 Axion</span>
             <span className="text-[rgba(255,255,255,0.12)]">·</span>
             <span>All rights reserved</span>
             <span className="text-[rgba(255,255,255,0.12)]">·</span>
-            <span>Built on</span>
             <svg
               width="48"
               height="12"

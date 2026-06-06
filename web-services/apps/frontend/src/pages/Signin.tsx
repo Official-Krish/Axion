@@ -23,7 +23,6 @@ export function SignIn() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
-    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -34,11 +33,6 @@ export function SignIn() {
       newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
     }
     return newErrors;
   };
@@ -66,7 +60,7 @@ export function SignIn() {
         toast.success("Successfully signed in!");
         localStorage.setItem("token", `Bearer ${res.data.token}`);
         localStorage.setItem("email", formData.email);
-        setFormData({ email: "", password: "" });
+        setFormData({ email: "" });
         navigate("/dashboard");
       } else {
         toast.error("Failed to sign in. Please try again.");
@@ -177,16 +171,6 @@ export function SignIn() {
                 >
                   <span>Password</span>
                 </Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  placeholder="Enter your password"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                  required
-                  className={`transition-all duration-200 focus:ring-2 focus:ring-primary/20 ${errors.password ? "animate-shake" : ""}`}
-                />
                 {errors.password && (
                   <p className="text-sm text-red-500 mt-1">{errors.password}</p>
                 )}
@@ -194,11 +178,7 @@ export function SignIn() {
               <Button
                 type="submit"
                 className="w-full group cursor-pointer"
-                disabled={
-                  !formData.email ||
-                  !formData.password ||
-                  !wallet?.adapter.connected
-                }
+                disabled={!formData.email || !wallet?.adapter.connected}
               >
                 {isLoading ? (
                   <div className="flex items-center space-x-2">
