@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
         - name: axion-frontend
-          image: krishanand01/axion-frontend:v1.2.13
+          image: krishanand01/axion-frontend:v1.2.14
           ports:
             - containerPort: 80
           livenessProbe:
@@ -79,7 +79,7 @@ spec:
     spec:
       containers:
         - name: axion-backend
-          image: krishanand01/axion-backend:v1.2.13
+          image: krishanand01/axion-backend:v1.2.14
           ports:
             - containerPort: 3000
           startupProbe:
