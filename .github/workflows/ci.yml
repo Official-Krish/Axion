@@ -3,27 +3,27 @@ name: CI
 on:
   pull_request:
     paths:
-      - "apps/**"
-      - "packages/**"
+      - "web-services/apps/**"
+      - "web-services/packages/**"
       - "indexer/**"
-      - "docker/**"
+      - "web-services/docker/**"
       - ".github/workflows/**"
-      - "turbo.json"
-      - "package.json"
-      - "bun.lock"
+      - "web-services/turbo.json"
+      - "web-services/package.json"
+      - "web-services/bun.lock"
 
   push:
     branches:
       - main
     paths:
-      - "apps/**"
-      - "packages/**"
+      - "web-services/apps/**"
+      - "web-services/packages/**"
       - "indexer/**"
-      - "docker/**"
+      - "web-services/docker/**"
       - ".github/workflows/**"
-      - "turbo.json"
-      - "package.json"
-      - "bun.lock"
+      - "web-services/turbo.json"
+      - "web-services/package.json"
+      - "web-services/bun.lock"
 
 permissions:
   contents: read
