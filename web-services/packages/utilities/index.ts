@@ -16,3 +16,11 @@ export {
   parseOrThrow,
 } from "./response";
 export { logger } from "./logger";
+export {
+  createRateLimiter,
+  publicLimiter,
+  authLimiter,
+  indexerLimiter,
+  healthLimiter,
+  depinVerificationLimiter,
+} from "./rateLimiter";

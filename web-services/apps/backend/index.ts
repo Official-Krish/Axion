@@ -3,6 +3,13 @@ import cors from "cors";
 import type { NextFunction, Request, Response } from "express";
 import { sendError, logger } from "@axion/utilities";
 import { redisConnection } from "@axion/utilities/redis";
+import {
+  publicLimiter,
+  authLimiter,
+  indexerLimiter,
+  healthLimiter,
+  depinVerificationLimiter,
+} from "@axion/utilities/rateLimiter";
 import prisma from "@axion/db";
 import UserRouter from "./routes/user";
 import vmInstance from "./routes/vmInstance";
@@ -21,17 +28,27 @@ process.on("uncaughtException", (error) => {
   logger.error("Uncaught Exception", error);
 });
 
+const startTime = Date.now();
+
 const app = express();
 app.use(express.json());
 app.use(cors());
+
+app.use("/api/v2/user/signup", publicLimiter);
+app.use("/api/v2/user/login", publicLimiter);
+app.use("/api/v2/user/depin/depinVerification", depinVerificationLimiter);
+app.use("/api/v2/indexer", indexerLimiter);
+app.use("/api/v2/user", authLimiter);
+app.use("/api/v2/vmInstance", authLimiter);
+app.use("/api/v2/vm", authLimiter);
+app.use("/api/v2/user/depin", authLimiter);
 
 app.use("/api/v2/user", UserRouter);
 app.use("/api/v2/vmInstance", vmInstance);
 app.use("/api/v2/vm", vm);
 app.use("/api/v2/user/depin", depinVM);
 app.use("/api/v2/indexer", indexerRouter);
-
-const startTime = Date.now();
+app.use("/api/v2/health", healthLimiter);
 
 app.get("/api/v2/health", async (_req: Request, res: Response) => {
   let dbStatus: "connected" | "error" = "connected";
