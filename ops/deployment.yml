@@ -275,7 +275,7 @@ spec:
               memory: "512Mi"
           volumeMounts:
             - name: env-file
-              mountPath: /app/.env
+              mountPath: /app/apps/ws-relayer/.env
               subPath: env
       volumes:
         - name: env-file
