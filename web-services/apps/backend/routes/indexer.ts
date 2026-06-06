@@ -171,61 +171,40 @@ async function handleInstruction(event: IndexerEvent) {
       const diskSize = args?.disk_size as number;
       const solPerHour = args?.sol_per_hour as number;
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: userPubKey },
+        data: { pdaAddress: accounts[2] },
       });
-
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { pdaAddress: accounts[2] },
-        });
-      }
       break;
     }
 
     case "activate_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: true },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: true },
-        });
-      }
       break;
     }
 
     case "deactivate_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: false },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: false },
-        });
-      }
       break;
     }
 
     case "penalize_host": {
       const hostPubKey = accounts[1];
 
-      const host = await prisma.depinHostMachine.findFirst({
+      await prisma.depinHostMachine.updateMany({
         where: { userPublicKey: hostPubKey },
+        data: { isActive: false, verified: false },
       });
-      if (host) {
-        await prisma.depinHostMachine.update({
-          where: { id: host.id },
-          data: { isActive: false, verified: false },
-        });
-      }
       break;
     }
 

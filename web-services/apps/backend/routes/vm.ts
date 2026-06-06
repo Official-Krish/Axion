@@ -28,9 +28,13 @@ vm.get("/calculatePrice", authMiddleware, async (req, res) => {
       return;
     }
     const { machineType, diskSize } = query.data;
-    const basePrice = await prisma.vMTypes.findFirst({
-      where: { machineType },
-    });
+    const [basePrice, solPrice] = await Promise.all([
+      prisma.vMTypes.findFirst({
+        where: { machineType },
+        select: { priceMonthlyUSD: true },
+      }),
+      getSolPrice(),
+    ]);
     if (!basePrice) {
       fail(res, 404, "Machine type not found");
       return;
@@ -40,7 +44,6 @@ vm.get("/calculatePrice", authMiddleware, async (req, res) => {
         ? (diskSize - FREE_DISK_GB) * DISK_COST_PER_GB
         : 0;
     const totalPrice = basePrice.priceMonthlyUSD + additionalCost;
-    const solPrice = await getSolPrice();
     ok(res, { price: totalPrice / solPrice });
   } catch (error) {
     logger.error("Error calculating price", error);
@@ -92,6 +95,7 @@ vm.get("/checkNameAvailability", authMiddleware, async (req, res) => {
   try {
     const existingVM = await prisma.vMInstance.findFirst({
       where: { name, status: { not: "DELETED" } },
+      select: { id: true },
     });
     ok(res, { available: !existingVM });
   } catch (error) {
@@ -106,13 +110,28 @@ vm.post("/topup", authMiddleware, async (req, res) => {
     fail(res, 400, "Invalid request data");
     return;
   }
-  const user = await getUserOr404(res, req.userId);
-  if (!user) return;
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { publicKey: true },
+  });
+  if (!user) {
+    fail(res, 404, "User not found");
+    return;
+  }
 
   try {
     const { id, amount, additionalEscrowDuration } = parsedData.data;
     const vmInstance = await prisma.vMInstance.findFirst({
       where: { id, userId: req.userId },
+      select: {
+        PaymentType: true,
+        endTime: true,
+        jobId: true,
+        provider: true,
+        instanceId: true,
+        region: true,
+        id: true,
+      },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");

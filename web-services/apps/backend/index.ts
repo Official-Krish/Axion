@@ -40,15 +40,16 @@ app.use(cors());
 
 app.use("/api/v2/user/signup", publicLimiter);
 app.use("/api/v2/user/login", publicLimiter);
+app.use("/api/v2/user/me", authLimiter);
+app.use("/api/v2/user/checkTimeout", authLimiter);
+app.use("/api/v2/vmInstance", authLimiter);
+app.use("/api/v2/vm", authLimiter);
+app.use("/api/v2/user/depin", authLimiter);
 app.use("/api/v2/user/depin/depinVerification", depinVerificationLimiter);
 app.use("/api/v2/user/depin/deploy", deployLimiter);
 app.use("/api/v2/user/depin/register", registerLimiter);
 app.use("/api/v2/user/depin/claimSOL", claimSOLLimiter);
 app.use("/api/v2/indexer", indexerLimiter);
-app.use("/api/v2/user", authLimiter);
-app.use("/api/v2/vmInstance", authLimiter);
-app.use("/api/v2/vm", authLimiter);
-app.use("/api/v2/user/depin", authLimiter);
 
 app.use("/api/v2/user", UserRouter);
 app.use("/api/v2/vmInstance", vmInstance);

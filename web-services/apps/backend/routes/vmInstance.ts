@@ -27,8 +27,14 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
     return;
   }
 
-  const user = await getUserOr404(res, req.userId);
-  if (!user) return;
+  const user = await prisma.user.findUnique({
+    where: { id: req.userId },
+    select: { timeoutAt: true, publicKey: true },
+  });
+  if (!user) {
+    fail(res, 404, "User not found");
+    return;
+  }
 
   if (user.timeoutAt) {
     const elapsed = Date.now() - new Date(user.timeoutAt).getTime();
@@ -55,6 +61,7 @@ vmInstance.post("/create", authMiddleware, async (req, res) => {
 
     const existingVm = await prisma.vMInstance.findFirst({
       where: { name, userId: req.userId, status: { not: "DELETED" } },
+      select: { id: true },
     });
     if (existingVm) {
       fail(res, 409, "VM with this name already exists");
@@ -144,6 +151,7 @@ vmInstance.get("/pollStatus", authMiddleware, async (req, res) => {
   try {
     const vmInstance = await prisma.vMInstance.findUnique({
       where: { id: vmId, instanceId },
+      select: { instanceId: true, region: true },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");
@@ -195,6 +203,7 @@ vmInstance.delete("/destroy", authMiddleware, async (req, res) => {
   try {
     const vmInstance = await prisma.vMInstance.findFirst({
       where: { id: vmId, instanceId },
+      select: { endTime: true },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");
@@ -221,7 +230,20 @@ vmInstance.get("/getAll", authMiddleware, async (req, res) => {
   try {
     const vms = await prisma.vMInstance.findMany({
       where: { userId: req.userId },
-      include: { VMConfig: true, VMImage: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        ipAddress: true,
+        price: true,
+        region: true,
+        startTime: true,
+        endTime: true,
+        provider: true,
+        instanceId: true,
+        VMConfig: { select: { os: true, machineType: true, diskSize: true } },
+        VMImage: { select: { applicationUrl: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
     ok(res, { vms });
@@ -242,7 +264,34 @@ vmInstance.get("/getDetails", authMiddleware, async (req, res) => {
   try {
     const vmInstance = await prisma.vMInstance.findFirst({
       where: { id },
-      include: { VMConfig: true, VMImage: true },
+      select: {
+        id: true,
+        name: true,
+        status: true,
+        ipAddress: true,
+        price: true,
+        region: true,
+        startTime: true,
+        endTime: true,
+        provider: true,
+        instanceId: true,
+        publicKey: true,
+        jobId: true,
+        VMConfig: { select: { os: true, machineType: true, diskSize: true } },
+        VMImage: {
+          select: {
+            name: true,
+            description: true,
+            dockerImage: true,
+            cpu: true,
+            ram: true,
+            diskSize: true,
+            os: true,
+            applicationUrl: true,
+            applicationPort: true,
+          },
+        },
+      },
     });
     if (!vmInstance) {
       fail(res, 404, "VM instance not found");
