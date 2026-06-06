@@ -19,7 +19,7 @@ export function createRateLimiter(config: RateLimiterConfig) {
     store: new RedisStore({
       // @ts-expect-error - ioredis call() return type incompatibility with rate-limit-redis SendCommandFn
       sendCommand: (...args: string[]) =>
-        redisConnection.call(args[0], ...args.slice(1)),
+        redisConnection.call(args[0]!, ...args.slice(1)),
     }),
     message: {
       success: false,
